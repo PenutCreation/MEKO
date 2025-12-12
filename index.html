@@ -1,13 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script src="https://cdn.jsdelivr.net/gh/PenutCreation/SERVER-MEKO-HYPERZ.G5z/DATABASEPOSTS.js?v=1001"></script>
+<script src="DATABASEPOSTS.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Meko - Your Social Network</title>
+    <title>Meko</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔵</text></svg>">
+    <link rel="icon" type="image/x-icon" href="https://penutcreation.github.io/MEKO/og-image.jpg">
+<!-- Basic SEO -->
+<meta name="description" content="Meko — a Safe Haven Social Media.">
+
+<!-- Open Graph / Facebook -->
+<meta property="og:title" content="Meko - Share and React, Share your Videos and
+Support">
+<meta property="og:description" content="A Safe Haven Social Media and Help
+others ">
+<meta property="og:image"
+content="https://penutcreation.github.io/MEKO/og-image.jpg">
+<meta property="og:url" content="https://penutcreation.github.io/MEKO/">
+<meta property="og:type" content="website">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Meko - Share and React, Share your Videos and
+Support">
+<meta name="twitter:description" content="Connect with friends and the world around you">
+<meta name="twitter:image"
+content="https://penutcreation.github.io/MEKO/og-image.jpg">
 </head>
 <style>
 /* Simplified Reset */
@@ -2609,6 +2629,7 @@ function createPostElement(post, postId) {
     const mentionsCurrentUser = currentUser && !currentUser.isGuest && 
                                 mentionedUsers.includes(currentUser.username);
     
+    // 1. SET INNER HTML (YOUR TEMPLATE)
     postElement.innerHTML = `
         <div class="post-header">
             <div class="post-user" data-username="${post.username}">
@@ -2636,7 +2657,22 @@ function createPostElement(post, postId) {
         </div>
     `;
     
-    // Add event listeners
+    // 2. FIND THE VIDEO AND ATTACH OBSERVER
+    // This targets the video element using the class defined in renderMediaContent
+    const videoElement = postElement.querySelector('.auto-pause-video');
+    
+    if (videoElement) {
+        // Assume 'postVideoObserver' is the global IntersectionObserver instance from the previous step.
+        // Start observing this specific video element immediately.
+        // The callback logic handles the play/pause when it scrolls in/out of view.
+        if (typeof postVideoObserver !== 'undefined') {
+            postVideoObserver.observe(videoElement);
+        } else {
+            console.error("postVideoObserver is not defined! Ensure the global observer setup code runs first.");
+        }
+    }
+    
+    // 3. Add other event listeners
     const likeBtn = postElement.querySelector('[data-action="like"]');
     if (likeBtn) {
         likeBtn.addEventListener('click', () => handleLike(postId, likeBtn));
@@ -2667,6 +2703,7 @@ function createPostElement(post, postId) {
 }
 
 
+
 // Add this function to track and display mentions for a user
 function getMentionsForUser(username) {
     const userMentions = [];
@@ -2694,15 +2731,18 @@ function getMentionsForUser(username) {
     return userMentions;
 }
 
-
 function renderMediaContent(post) {
     if (post.iframe) {
+        // Iframes are typically handled differently, but we can add the auto-pause logic to the video inside the iframe (if you control it)
+        // or apply the class to the iframe itself if it can be paused via external API (which is rare).
+        // For now, only the video tag is modified.
         return `<div class="post-media"><iframe class="post-iframe" src="${post.iframe}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;
     } else if (post.video) {
         return `<div class="post-media">
     <video 
+        class="auto-pause-video"  
         src="${post.video}" 
-        controls loop
+         loop   controls             
         controlsList="nodownload noplaybackrate"
         oncontextmenu="return false;"
         disablePictureInPicture
@@ -3841,6 +3881,43 @@ if (document.readyState === 'loading') {
     // DOM is already loaded
     init();
 }
+</script>
+
+<script>
+// --- GLOBAL INTERSECTION OBSERVER SETUP ---
+
+const videoObserverOptions = {
+    root: null, // Use the viewport
+    rootMargin: '0px',
+    threshold: [0.0, 0.25, 0.5, 0.75, 1.0] // Check intersection at multiple points
+};
+
+const videoObserverCallback = (entries) => {
+    entries.forEach(entry => {
+        const video = entry.target;
+
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
+            // AUTO-PLAY: Video is 50% or more visible.
+            if (video.paused) {
+                // Check if video is loaded and attempt to play
+                video.play().catch(error => {
+                    // Log error if autoplay is blocked (e.g., if 'muted' was somehow missed)
+                    console.warn("Autoplay blocked for video:", video.src, error);
+                });
+            }
+        } else {
+            // AUTO-PAUSE: Video is less than 50% visible (scrolled away)
+            if (!video.paused) {
+                video.pause();
+            }
+        }
+    });
+};
+
+const postVideoObserver = new IntersectionObserver(videoObserverCallback, videoObserverOptions);
+
+// --- END GLOBAL INTERSECTION OBSERVER SETUP ---
+
 </script>
 </body>
 </html>
