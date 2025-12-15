@@ -18,8 +18,4 @@ A Safe Haven Social Media Platform
 
 ---
 
-## Getting Started
-### Clone the Repository
-```bash
-git clone https://github.com/PenutCreation/TwetTwit.git
-cd TwetTwit
+
