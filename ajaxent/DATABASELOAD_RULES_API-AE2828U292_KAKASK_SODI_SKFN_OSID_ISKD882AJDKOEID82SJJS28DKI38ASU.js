@@ -1,7 +1,7 @@
 // main.js
 // Global variables
 let currentUser = null;
-let postsPerPage = 5;
+let postsPerPage = 20;
 let currentPage = 0;
 let currentMediaType = null;
 let allPosts = [];
@@ -2198,7 +2198,7 @@ function processPosts(postsArray) {
 }
 
 // ==================== FETCH POSTS (LOCAL JSON) ====================
-const JSON_URL = "/ajson/server_tick/storage/stack1/database_827_383_294_103_759_927_953.json";
+const JSON_URL = "database_827_383_294_103_759_927_953.json";
 
 // ==================== JSON STRUCTURE EXTRACTOR ====================
 function extractPostsFromJSON(data) {
