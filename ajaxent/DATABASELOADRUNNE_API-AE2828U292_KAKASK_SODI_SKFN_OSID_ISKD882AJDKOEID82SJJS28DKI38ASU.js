@@ -1016,7 +1016,105 @@ function formatJoinedDate(date) {
         return 'Recently';
     }
 }
+// Sound variables
+let likeSound = null;
+let unlikeSound = null;
+let soundsLoaded = false;
 
+// Initialize sounds
+function initSounds() {
+    try {
+        // Create audio objects
+        likeSound = new Audio();
+        unlikeSound = new Audio();
+        
+        // Set sources (update paths as needed)
+        likeSound.src = 'sounds/like.mp3';
+        unlikeSound.src = 'sounds/unlike.mp3';
+        
+        // Preload
+        likeSound.preload = 'auto';
+        unlikeSound.preload = 'auto';
+        likeSound.load();
+        unlikeSound.load();
+        
+        soundsLoaded = true;
+        console.log('Sounds loaded successfully');
+    } catch (error) {
+        console.error('Error loading sounds:', error);
+        soundsLoaded = false;
+    }
+}
+
+// Call this when your app loads
+document.addEventListener('DOMContentLoaded', initSounds);
+
+// Updated sound functions
+function playLikeSound() {
+    if (!soundsLoaded || !likeSound) {
+        playFallbackSound('like');
+        return;
+    }
+    
+    try {
+        // Reset sound to start
+        likeSound.currentTime = 0;
+        // Set volume
+        likeSound.volume = 0.5;
+        // Play
+        likeSound.play().catch(e => {
+            console.log('Could not play like sound:', e);
+            playFallbackSound('like');
+        });
+    } catch (error) {
+        console.log('Error playing like sound:', error);
+        playFallbackSound('like');
+    }
+}
+
+function playUnlikeSound() {
+    if (!soundsLoaded || !unlikeSound) {
+        playFallbackSound('unlike');
+        return;
+    }
+    
+    try {
+        // Reset sound to start
+        unlikeSound.currentTime = 0;
+        // Set volume
+        unlikeSound.volume = 0.3;
+        // Play
+        unlikeSound.play().catch(e => {
+            console.log('Could not play unlike sound:', e);
+            playFallbackSound('unlike');
+        });
+    } catch (error) {
+        console.log('Error playing unlike sound:', error);
+        playFallbackSound('unlike');
+    }
+}
+
+// Keep your fallback sound for when MP3s fail
+function playFallbackSound(type) {
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        
+        oscillator.connect(audioContext.destination);
+        oscillator.frequency.value = type === 'like' ? 600 : 400;
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.1);
+    } catch (error) {
+        console.log('Fallback sound failed');
+    }
+}
+
+// Optional: Add sound toggle functionality
+let soundEnabled = true;
+
+
+
+// Modify your handleLike function to respect sound setting
 function handleLike(postId, button) {
     if (!currentUser || currentUser.isGuest) {
         alert('Please login to like posts!');
@@ -1042,13 +1140,13 @@ function handleLike(postId, button) {
         currentLikes--;
         button.classList.remove('liked');
         button.innerHTML = '<i class="fas fa-heart"></i> Like';
-        playUnlikeSound();
+        if (soundEnabled) playUnlikeSound();
     } else {
         currentUser.likedPosts.add(postId);
         currentLikes++;
         button.classList.add('liked');
         button.innerHTML = '<i class="fas fa-heart"></i> Liked';
-        playLikeSound();
+        if (soundEnabled) playLikeSound();
         button.style.transform = 'scale(1.2)';
         setTimeout(() => {
             button.style.transform = 'scale(1)';
@@ -1067,67 +1165,6 @@ function handleLike(postId, button) {
     
     saveCurrentUser();
 }
-
-function playLikeSound() {
-    try {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.frequency.value = 523.25;
-        oscillator.type = 'sine';
-        
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-        
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.5);
-    } catch (error) {
-        console.log('Audio context not supported, using fallback sound');
-        playFallbackSound('like');
-    }
-}
-
-function playUnlikeSound() {
-    try {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.frequency.value = 392.00;
-        oscillator.type = 'sine';
-        
-        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-        
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.3);
-    } catch (error) {
-        console.log('Audio context not supported, using fallback sound');
-        playFallbackSound('unlike');
-    }
-}
-
-function playFallbackSound(type) {
-    try {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audioContext.createOscillator();
-        
-        oscillator.connect(audioContext.destination);
-        oscillator.frequency.value = type === 'like' ? 600 : 400;
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + 0.1);
-    } catch (error) {
-        console.log('Playing simulated sound');
-    }
-}
-
 function scrollToPost(postId) {
     const postElement = document.querySelector(`[data-post-id="${postId}"]`);
     if (postElement) {
