@@ -753,6 +753,7 @@ function getMentionsForUser(username) {
     userMentions.sort((a, b) => b.datePost - a.datePost);
     return userMentions;
 }
+
 // ==================== DATE FUNCTIONS ====================
 
 function parseCustomDate(dateString) {
@@ -1402,7 +1403,6 @@ function loadSuggestedProfiles() {
 }
 
 // ==================== PROFILE FUNCTIONS ====================
-// ==================== PROFILE FUNCTIONS ====================
 
 function showOwnProfile() {
     if (!currentUser || currentUser.isGuest) {
@@ -1588,7 +1588,9 @@ function showUserProfile(username, name, isOwnProfile = false) {
                     <h3>No posts yet</h3>
                     <p>${isOwnProfile ? 'You haven\'t posted anything yet.' : 'This user hasn\'t posted anything yet.'}</p>
                     ${isOwnProfile ? `
-
+                    <button class="btn btn-primary" onclick="showPostModal()">
+                        <i class="fas fa-plus"></i> Create Your First Post
+                    </button>
                     ` : ''}
                 </div>
             `;
@@ -1920,6 +1922,7 @@ function toggleTheme() {
 }
 
 // ==================== SETUP & INITIALIZATION ====================
+
 function setupEventListeners() {
     // Auth event listeners
     if (elements.authTabs) {
@@ -2120,258 +2123,302 @@ function setupEventListeners() {
     });
 }
 
-function initApp() {
-    console.log('Initializing application...');
-    
-    // Ensure USERS_KEY exists in localStorage
-    if (!localStorage.getItem(USERS_KEY)) {
-        localStorage.setItem(USERS_KEY, JSON.stringify({}));
-    }
-    
-    setupEventListeners();
-    setupTheme();
-    
-    // Note: Posts will be loaded after fetch completes
-    console.log('App initialized, waiting for posts data...');
-}
-// ==================== POST DATA FETCHING & PROCESSING ====================
 function processPosts(postsArray) {
     console.log('Processing posts data...');
-    
+
     if (!Array.isArray(postsArray)) {
-        console.error('postsArray is not an array');
-        
-        // Try to extract array from object
-        if (postsArray && typeof postsArray === 'object') {
-            if (postsArray.posts && Array.isArray(postsArray.posts)) {
-                postsArray = postsArray.posts;
-            } else if (postsArray.record && postsArray.record.posts && Array.isArray(postsArray.record.posts)) {
-                postsArray = postsArray.record.posts;
-            } else if (postsArray.record && Array.isArray(postsArray.record)) {
-                postsArray = postsArray.record;
-            } else {
-                postsArray = [];
-            }
-        } else {
-            postsArray = [];
-        }
+        console.error('processPosts expected array, got:', postsArray);
+        postsArray = [];
     }
-    
-    // Validate posts
+
+    // Validate posts (more lenient for testing)
     const validPosts = postsArray.filter(post => {
-        if (!post || typeof post !== 'object') return false;
-        if (!post.name || !post.username || !post.datePost) return false;
+        if (!post || typeof post !== 'object') {
+            console.log('Skipping invalid post object:', post);
+            return false;
+        }
         
+        // Check required fields
+        const hasRequired = post.name && post.username && post.datePost;
+        if (!hasRequired) {
+            console.log('Skipping post missing required fields:', post);
+            return false;
+        }
+        
+        // Try to parse date
         try {
             const parsedDate = parseCustomDate(post.datePost);
-            return !isNaN(parsedDate.getTime());
-        } catch (e) {
+            const isValidDate = !isNaN(parsedDate.getTime());
+            if (!isValidDate) {
+                console.log('Skipping post with invalid date:', post.datePost);
+            }
+            return isValidDate;
+        } catch {
+            console.log('Skipping post with date parsing error:', post.datePost);
             return false;
         }
     });
-    
+
     console.log(`Valid posts: ${validPosts.length}/${postsArray.length}`);
-    
-    // Update DATABASEPOSTS - PRESERVE ORIGINAL ORDER for consistent ID assignment
-    DATABASEPOSTS = [...validPosts];
-    
-    // Clear feed
-    if (elements.postsFeed) {
-        elements.postsFeed.innerHTML = '';
+
+    if (validPosts.length === 0) {
+        console.warn('No valid posts found!');
+        renderEmptyState();
+        return;
     }
-    
-    // Reset state
+
+    // Store the posts
+    DATABASEPOSTS = [...validPosts];
+
+    // Reset UI
+    if (elements.postsFeed) elements.postsFeed.innerHTML = '';
     displayedPosts.clear();
     currentPage = 0;
     allPosts = [];
 
-    if (DATABASEPOSTS.length > 0) {
-        console.log('Sample posts in original order:');
-        DATABASEPOSTS.slice(0, 3).forEach((post, i) => {
-            console.log(`${i + 1}. ${post.name} (@${post.username}): ${post.datePost}`);
-        });
-        
-        // Initialize posts with consistent IDs
-        initializePosts(); 
-        
-        // Load extra features
-        loadTrendingTopics();
-        loadSuggestedProfiles();
-        
-        // Load initial posts
-        loadPosts(); 
-        
-        console.log('Posts processing complete');
-        
-        // Update UI
-        if (elements.loadMoreBtn) {
-            elements.loadMoreBtn.style.display = 'block';
-            elements.loadMoreBtn.disabled = false;
-            elements.loadMoreBtn.textContent = 'Load More';
-        }
-    } else {
-        console.log('No valid posts to display');
-        
-        if (elements.postsFeed) {
-            elements.postsFeed.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-newspaper"></i>
-                    <h3>No posts available</h3>
-                    <p>No posts could be loaded.</p>
-                </div>
-            `;
-        }
-        
-        if (elements.loadMoreBtn) {
-            elements.loadMoreBtn.style.display = 'none';
-        }
+    // Debug log first few posts
+    console.log('First 3 posts:');
+    DATABASEPOSTS.slice(0, 3).forEach((p, i) => {
+        console.log(`${i + 1}. ${p.name} (@${p.username}) — ${p.datePost} — Likes: ${p.likes}`);
+    });
+
+    // Initialize everything
+    initializePosts(); // This creates allPosts from DATABASEPOSTS
+    loadTrendingTopics();
+    loadSuggestedProfiles();
+    loadPosts(); // This displays the posts
+
+    if (elements.loadMoreBtn) {
+        elements.loadMoreBtn.style.display = 'block';
+        elements.loadMoreBtn.disabled = false;
+        elements.loadMoreBtn.textContent = 'Load More';
     }
+
+    console.log('Posts processing complete.');
 }
-// ==================== FETCH POSTS ====================
-function fetchPosts() {
-    console.log('Fetching posts from JSONBin...');
+
+// ==================== FETCH POSTS (LOCAL JSON) ====================
+const JSON_URL = "/ajson/server_tick/storage/stack1/database_827_383_294_103_759_927_953.json";
+
+// ==================== JSON STRUCTURE EXTRACTOR ====================
+function extractPostsFromJSON(data) {
+    if (!data) {
+        console.error("No data received");
+        return [];
+    }
+
+    console.log("Data type:", typeof data);
     
-    // Show loading state
+    // If data is already the array (which it should be)
+    if (Array.isArray(data)) {
+        console.log("Successfully extracted array of posts");
+        console.log("Number of posts:", data.length);
+        return data;
+    }
+    
+    // If data is not an array, log what we got
+    console.error("Expected array but got:", typeof data);
+    console.error("Data structure:", data);
+    
+    return [];
+}
+function fetchPosts() {
+    console.log("Fetching posts from:", JSON_URL);
+
     if (elements.postsFeed) {
         elements.postsFeed.innerHTML = `
-            <div class="loading-state">
-                <div class="loading-spinner"></div>
-                <p>Loading posts...</p>
+            <div class="loading-state" style="text-align: center; padding: 3rem;">
+                <div class="loading-spinner" style="width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem;"></div>
+                <p style="color: var(--text-secondary);">Loading posts...</p>
             </div>
         `;
     }
-    
-    fetch('https://api.jsonbin.io/v3/b/693d2f6dd0ea881f40263fd0')
-        .then(response => {
-            console.log('Response status:', response.status);
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+
+    // Add timeout to prevent hanging
+    const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Request timeout after 10 seconds')), 10000);
+    });
+
+    const fetchPromise = fetch(JSON_URL + "?v=" + Date.now(), {
+        cache: "no-store",
+        headers: {
+            'Accept': 'application/json'
+        }
+    });
+
+    Promise.race([fetchPromise, timeoutPromise])
+        .then(res => {
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}: ${res.statusText}`);
             }
-            return response.json();
+            return res.text();
         })
-        .then(data => {
-            console.log('Full API response received');
-            console.log('Data type:', typeof data);
-            console.log('Data structure:', data);
+        .then(text => {
+            console.log("Raw response received, length:", text.length);
             
-            let postsArray = [];
+            // Clean the text first
+            let cleanedText = text.trim();
             
-            // Check ALL possible structures
-            if (data && data.record && data.record.record && Array.isArray(data.record.record)) {
-                // Structure: { record: { posts: [...] } }
-                console.log('Found structure: data.record.record');
-                postsArray = data.record.record;
-            } 
-            else if (data && data.posts && Array.isArray(data.posts)) {
-                // Structure: { posts: [...] }
-                console.log('Found structure: data.posts');
-                postsArray = data.posts;
-            }
-            else if (data && data.record && Array.isArray(data.record)) {
-                // Structure: { record: [...] }
-                console.log('Found structure: data.record');
-                postsArray = data.record;
-            }
-            else if (Array.isArray(data)) {
-                // Structure: [...]
-                console.log('Found structure: data is array');
-                postsArray = data;
-            }
-            else {
-                console.error('Could not find posts array in any structure');
-                console.error('Available keys:', Object.keys(data || {}));
-                throw new Error('Invalid response structure - no posts array found');
-            }
-            
-            console.log(`Successfully extracted ${postsArray.length} posts`);
-            
-            if (postsArray.length > 0) {
-                console.log('First post:', {
-                    name: postsArray[0].name,
-                    username: postsArray[0].username,
-                    datePost: postsArray[0].datePost,
-                    content: postsArray[0].content?.substring(0, 50),
-                    likes: postsArray[0].likes,
-                    topic: postsArray[0].topic
-                });
-            }
-            
-            // Process the posts
-            processPosts(postsArray);
-        })
-        .catch(error => {
-            console.error('Fetch error:', error);
-            
-            // Show error in UI
-            if (elements.postsFeed) {
-                elements.postsFeed.innerHTML = `
-                    <div class="error-state">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <h3>Failed to Load Posts</h3>
-                        <p>${error.message}</p>
-                        <button onclick="fetchPosts()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: var(--accent); color: white; border: none; border-radius: 0.5rem; cursor: pointer;">
-                            Retry
-                        </button>
-                    </div>
-                `;
-            }
-            
-            // Initialize with empty array
-            processPosts([]);
-        });
-}
-// ==================== DEBUG FUNCTION ====================
-function debugFetch() {
-    console.log('=== DEBUG: Testing API directly ===');
-    
-    fetch('https://api.jsonbin.io/v3/b/693d2f6dd0ea881f40263fd0')
-        .then(r => r.json())
-        .then(data => {
-            console.log('DEBUG - Full response:', data);
-            console.log('DEBUG - Type of data:', typeof data);
-            console.log('DEBUG - Keys in data:', Object.keys(data));
-            
-            if (data.posts) {
-                console.log('DEBUG - data.posts exists:', typeof data.posts);
-                console.log('DEBUG - data.posts is array?', Array.isArray(data.posts));
-                if (Array.isArray(data.posts)) {
-                    console.log('DEBUG - First post:', data.posts[0]);
-                    console.log('DEBUG - Posts count:', data.posts.length);
+            // Check if the JSON is complete
+            if (!cleanedText.endsWith('}') && !cleanedText.endsWith(']')) {
+                console.warn("JSON might be truncated, attempting to fix...");
+                // Try to find the last complete object
+                const lastBrace = cleanedText.lastIndexOf('}');
+                const lastBracket = cleanedText.lastIndexOf(']');
+                const cutIndex = Math.max(lastBrace, lastBracket);
+                
+                if (cutIndex > 0) {
+                    cleanedText = cleanedText.substring(0, cutIndex + 1);
+                    console.log("Trimmed to:", cleanedText.length, "chars");
                 }
             }
             
-            // Check if there's any array in the response
-            for (const key in data) {
-                console.log(`DEBUG - Key "${key}":`, typeof data[key], Array.isArray(data[key]) ? `[Array, length: ${data[key].length}]` : data[key]);
+            // Try to parse
+            try {
+                const data = JSON.parse(cleanedText);
+                console.log("JSON parsed successfully");
+                
+                const postsArray = extractPostsFromJSON(data);
+                console.log("Extracted posts:", postsArray.length);
+                
+                if (postsArray.length > 0) {
+                    console.log("Sample post:", postsArray[0]);
+                    processPosts(postsArray);
+                } else {
+                    console.error("No posts extracted");
+                    renderEmptyState();
+                }
+            } catch (parseError) {
+                console.error("JSON parse error:", parseError.message);
+                console.error("Problem area (around error):");
+                const errorIndex = parseError.message.match(/position (\d+)/);
+                if (errorIndex) {
+                    const idx = parseInt(errorIndex[1]);
+                    const start = Math.max(0, idx - 100);
+                    const end = Math.min(cleanedText.length, idx + 100);
+                    console.error("Context:", cleanedText.substring(start, end));
+                }
+                renderErrorState("Invalid JSON format received from server");
             }
         })
-        .catch(e => console.error('DEBUG - Fetch error:', e));
+        .catch(err => {
+            console.error("Fetch error:", err);
+            renderErrorState(err.message || "Failed to load posts");
+            processPosts([]);
+        });
 }
 
-/// ==================== APPLICATION START ====================
+// ==================== UI HELPERS ====================
+function renderEmptyState() {
+    if (!elements.postsFeed) return;
 
-// Initialize the application
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM fully loaded, initializing app...');
+    elements.postsFeed.innerHTML = `
+        <div class="empty-state" style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+            <i class="fas fa-newspaper" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+            <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem; color: var(--text-secondary);">No posts available</h3>
+            <p style="font-size: 0.95rem; max-width: 300px; margin: 0 auto 1rem;">No posts could be loaded from the server.</p>
+            <button onclick="fetchPosts()" class="btn btn-secondary" style="margin-top: 1rem;">
+                <i class="fas fa-redo"></i> Try Again
+            </button>
+        </div>
+    `;
+
+    if (elements.loadMoreBtn) {
+        elements.loadMoreBtn.style.display = "none";
+    }
+}
+
+function renderErrorState(message) {
+    if (!elements.postsFeed) return;
+
+    elements.postsFeed.innerHTML = `
+        <div class="error-state" style="text-align: center; padding: 3rem 1rem; color: var(--danger);">
+            <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+            <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Failed to Load Posts</h3>
+            <p style="margin: 1rem 0; color: var(--text-secondary);">${message}</p>
+            <button onclick="fetchPosts()" class="btn btn-primary" style="margin-top: 1rem;">
+                <i class="fas fa-redo"></i> Retry
+            </button>
+        </div>
+    `;
+}
+
+// ==================== INITIALIZE APP ====================
+function initializeApp() {
+    console.log("Initializing app...");
     
-    // Initialize app structure and event listeners
-    initApp();
+    // Make sure elements exist
+    if (!elements || !elements.postsFeed) {
+        console.error("DOM elements not ready yet!");
+        setTimeout(initializeApp, 100);
+        return;
+    }
     
-    // Check authentication state
-    checkAuth();
+    // Set up event listeners
+    setupEventListeners();
+    setupTheme();
     
-    // Fetch posts from API
+    // Then fetch posts
     fetchPosts();
-});
+    
+    // Then check auth
+    checkAuth();
+}
 
-// If DOM is already loaded, initialize immediately
+// Start the app when DOM is ready
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('DOMContentLoaded listener added');
-    });
+    document.addEventListener('DOMContentLoaded', initializeApp);
 } else {
-    console.log('DOM already loaded, initializing now');
-    initApp();
-    checkAuth();
-    fetchPosts();
+    initializeApp();
 }
+
+// Add CSS for spinner animation
+const style = document.createElement('style');
+style.textContent = `
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+`;
+document.head.appendChild(style);
+
+// Debug function
+function debugFetch() {
+    console.log("=== DEBUG FETCH ===");
+    console.log("URL:", JSON_URL);
+    
+    fetch(JSON_URL + "?debug=" + Date.now())
+        .then(r => {
+            console.log("Status:", r.status, r.statusText);
+            return r.text();
+        })
+        .then(t => {
+            console.log("Full response length:", t.length);
+            console.log("First 1000 chars:", t.substring(0, 1000));
+            console.log("Last 200 chars:", t.substring(t.length - 200));
+            
+            // Check for missing brackets
+            const openBraces = (t.match(/{/g) || []).length;
+            const closeBraces = (t.match(/}/g) || []).length;
+            const openBrackets = (t.match(/\[/g) || []).length;
+            const closeBrackets = (t.match(/\]/g) || []).length;
+            
+            console.log("Counts: {=" + openBraces + " }=" + closeBraces + " [=" + openBrackets + " ]=" + closeBrackets);
+            
+            if (openBraces !== closeBraces) {
+                console.error("MISMATCH: Braces don't match!");
+            }
+            if (openBrackets !== closeBrackets) {
+                console.error("MISMATCH: Brackets don't match!");
+            }
+            
+            try {
+                const parsed = JSON.parse(t);
+                console.log("✅ JSON is valid");
+                console.log("Structure:", parsed);
+            } catch(e) {
+                console.error("❌ JSON parse error:", e.message);
+            }
+        })
+        .catch(console.error);
+}
+
