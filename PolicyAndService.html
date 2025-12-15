@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>TwetTwit — Privacy Policy & Community Guidelines</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: linear-gradient(180deg, #020617, #0f172a);
+  color: #e5e7eb;
+}
+
+.container {
+  max-width: 950px;
+  margin: auto;
+  padding: 40px 20px;
+}
+
+h1 {
+  color: #fff;
+}
+
+h2 {
+  margin-top: 50px;
+  border-bottom: 1px solid #334155;
+  padding-bottom: 6px;
+  color: #e0f2fe;
+}
+
+h3 {
+  margin-top: 30px;
+  color: #bae6fd;
+}
+
+p, li {
+  color: #cbd5f5;
+  line-height: 1.7;
+}
+
+ul {
+  margin-left: 20px;
+}
+
+.notice, .warning {
+  background: #020617;
+  padding: 15px;
+  margin: 20px 0;
+  border-left: 4px solid;
+}
+
+.notice { border-color: #38bdf8; }
+.warning { border-color: #f87171; color: #fee2e2; }
+
+.nav {
+  background: #020617;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+}
+
+.nav a {
+  color: #38bdf8;
+  text-decoration: none;
+  margin-right: 15px;
+  font-weight: bold;
+}
+
+.nav a:hover {
+  text-decoration: underline;
+}
+
+.search-box {
+  margin-top: 15px;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 10px;
+  background: #020617;
+  border: 1px solid #334155;
+  color: #fff;
+  border-radius: 6px;
+}
+
+.highlight {
+  background: #1e3a8a;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+footer {
+  margin-top: 60px;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #94a3b8;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<h1>TwetTwit Privacy Policy & Community Guidelines</h1>
+<p><strong>Effective:</strong> January 4, 2022</p>
+
+<!-- NAVIGATION -->
+<div class="nav">
+  <strong>Jump to:</strong><br><br>
+  <a href="#privacy">Privacy Policy</a>
+  <a href="#accounts">Account Management</a>
+  <a href="#copyright">Copyright Policy</a>
+  <a href="#illegal">Illegal Content</a>
+  <a href="#behavior">User Behavior</a>
+  <a href="#spam">Spam & Abuse</a>
+
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="Search policy (example: copyright, ban, hacking)">
+  </div>
+</div>
+
+<!-- PRIVACY -->
+<h2 id="privacy">Privacy Policy</h2>
+<p>
+We are allowed to use your email to contact you regarding your account, security,
+or policy updates.
+</p>
+
+<ul>
+  <li>We may ban accounts permanently if Terms of Service are violated.</li>
+  <li>If your account is hacked, you are allowed to contact us.</li>
+  <li>If a ban was incorrect, you may submit an appeal.</li>
+</ul>
+
+<div class="notice">
+We will never access or modify your account unless required for emergency,
+security, moderation, or ban appeals.
+</div>
+
+<!-- ACCOUNT MANAGEMENT -->
+<h2 id="accounts">Account & Content Management</h2>
+<ul>
+  <li>We may manage, hide, or moderate posts and media.</li>
+  <li>Profiles may be hidden from certain users for safety reasons.</li>
+  <li>We may update account details only when necessary.</li>
+  <li>All moderation is handled by real human moderators, not AI.</li>
+</ul>
+
+<!-- COPYRIGHT -->
+<h2 id="copyright">Copyright & Ownership</h2>
+<ul>
+  <li>Copyrighted content is not allowed without permission.</li>
+  <li>Small violations may receive warnings.</li>
+  <li>Verified creator reports result in permanent bans.</li>
+</ul>
+
+<div class="warning">
+Uploading copyrighted content after a verified report will permanently terminate your account.
+</div>
+
+<!-- ILLEGAL -->
+<h2 id="illegal">Illegal Content & Services</h2>
+<ul>
+  <li>Illegal files or services embedded in videos or iframes are prohibited.</li>
+  <li>Accounts sharing illegal data will be suspended.</li>
+</ul>
+
+<!-- BEHAVIOR -->
+<h2 id="behavior">User Behavior & Reporting</h2>
+<ul>
+  <li>Report policy-breaking content instead of starting arguments.</li>
+  <li>Respect others and their situations.</li>
+  <li>Frequent inappropriate language may result in moderation.</li>
+  <li>Be a peacemaker, not a troublemaker.</li>
+</ul>
+
+<!-- SPAM -->
+<h2 id="spam">Spam & Post Abuse</h2>
+<ul>
+  <li>Do not post excessively.</li>
+  <li>Post abuse may lead to restrictions or suspension.</li>
+</ul>
+
+
+</div>
+
+<script>
+const searchInput = document.getElementById("searchInput");
+
+searchInput.addEventListener("input", () => {
+  const text = searchInput.value.toLowerCase();
+  document.querySelectorAll(".highlight").forEach(e => {
+    e.outerHTML = e.innerHTML;
+  });
+
+  if (!text) return;
+
+  document.querySelectorAll("p, li, h2, h3").forEach(el => {
+    if (el.textContent.toLowerCase().includes(text)) {
+      el.innerHTML = el.innerHTML.replace(
+        new RegExp(text, "gi"),
+        match => `<span class="highlight">${match}</span>`
+      );
+    }
+  });
+});
+</script>
+
+</body>
+</html>
