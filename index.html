@@ -495,7 +495,63 @@ const videoObserverCallback = (entries) => {
 const postVideoObserver = new IntersectionObserver(videoObserverCallback, videoObserverOptions);
 
 // --- END GLOBAL INTERSECTION OBSERVER SETUP ---
+async function migratedata() {
+    console.log("🛠️ Preparing migration tools...");
 
+    // 1. Setup Firebase Connection (Inside the function so 'db' is always defined)
+    const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js");
+    const { getFirestore, collection, addDoc } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+
+    // PASTE YOUR KEYS HERE
+    const firebaseConfig = {
+  apiKey: "AIzaSyCKLZ3ujD3w8SYN3wIPD4qDa9vbkdS_aCs",
+  authDomain: "meko-7cfaf.firebaseapp.com",
+  projectId: "meko-7cfaf",
+  storageBucket: "meko-7cfaf.firebasestorage.app",
+  messagingSenderId: "403399504592",
+  appId: "1:403399504592:web:94ed7513062cc3f6dba4d5"
+};
+
+
+    // 2. Initialize
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // 3. Find your local JSON data
+    const oldPosts = window.DATABASEPOSTS;
+
+    if (!oldPosts) {
+        console.error("❌ ERROR: Cannot find window.DATABASEPOSTS. Is your JSON file still linked in index.html?");
+        return;
+    }
+
+    console.log(`📡 Connected. Moving ${oldPosts.length} posts to the cloud...`);
+
+    // 4. The Migration Loop
+    for (const post of oldPosts) {
+        try {
+            await addDoc(collection(db, "posts"), {
+                "name": post.name || "Guest",
+                "username": post.username || "guest",
+                "datePost": post.datePost || "Dec 18 2025",
+                "content": post.content || "",
+                "iframe": post.iframe || "",
+                "video": post.video || "",
+                "image": post.image || "",
+                "likes": Number(post.likes) || 0,
+                "liked": false,
+                "topic": post.topic || "MyMeko",
+                "createdAt": Date.now() // Added so you can sort by "Newest" later
+            });
+            console.log(`✅ Migrated: ${post.name} (@${post.username})`);
+        } catch (e) {
+            console.error(`❌ Failed to move post by ${post.username}: `, e);
+        }
+    }
+
+    console.log("--- 🎉 DONE! All posts are now in Firebase ---");
+}
+ }
 </script>
 
 <script id="valid-287329eXkskDUU28DJEI28eu93Usjasaeeaesy#7AeEaIUO8iajdskIk#8#-----PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxMTEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RXJyb3IgbG9hZGluZyB2aWRlbzwvdGV4dD48L3N2Zz4=PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxMTEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RXJyb3IgbG9hZGluZyB2aWRlbzwvdGV4dD48L3N2Zz4=PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxMTEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RXJyb3IgbG9hZGluZyB2aWRlbzwvdGV4dD48L3N2Zz4="src="ajaxent/DATABASELOADRUNNE_API-AE2828U292_KAKASK_SODI_SKFN_OSID_ISKD882AJDKOEID82SJJS28DKI38ASU.js"></script>
