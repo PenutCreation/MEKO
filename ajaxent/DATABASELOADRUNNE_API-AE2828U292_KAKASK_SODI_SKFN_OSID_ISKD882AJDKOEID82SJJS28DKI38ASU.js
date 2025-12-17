@@ -9,6 +9,10 @@ let displayedPosts = new Set();
 let DATABASEPOSTS = []; // Initialize as empty array
 let sharedPostId = null;
 
+// Video security constants
+const VIDEO_PROXY_URL = '/api/video-proxy'; // Your backend endpoint
+const VIDEO_ENCRYPTION_KEY = 'meko-secure-video-key-2024'; // Change this in production
+
 // Store all registered users in localStorage
 const USERS_KEY = 'meko-registered-users';
 const CURRENT_USER_KEY = 'meko-current-user';
@@ -83,6 +87,294 @@ const elements = {
     currentUserAvatar: document.getElementById('currentUserAvatar'),
     userAvatar: document.querySelector('#userAvatar img')
 };
+
+// ==================== VIDEO SECURITY FUNCTIONS ====================
+
+/**
+ * Encrypt video URL using Base64 and simple XOR encryption
+ */
+ 
+function encryptVideoUrl(videoUrl, postId) {
+    try {
+        // Create payload with timestamp to prevent replay attacks
+        const payload = {
+            url: videoUrl,
+            postId: postId,
+            timestamp: Date.now(),
+            expire: Date.now() + (24 * 60 * 60 * 1000) // 24 hours expiry
+        };
+        
+        // Convert to JSON and encrypt
+        const jsonString = JSON.stringify(payload);
+        const encoded = btoa(encodeURIComponent(jsonString));
+        
+        // Simple XOR encryption for additional security
+        let encrypted = '';
+        const key = VIDEO_ENCRYPTION_KEY;
+        
+        for (let i = 0; i < encoded.length; i++) {
+            const keyChar = key.charCodeAt(i % key.length);
+            const encodedChar = encoded.charCodeAt(i);
+            encrypted += String.fromCharCode(encodedChar ^ keyChar);
+        }
+        
+        return btoa(encrypted);
+    } catch (error) {
+        console.error('Error encrypting video URL:', error);
+        return null;
+    }
+}
+
+/**
+ * Generate secure token for video playback
+ */
+function generateSecureVideoToken(videoUrl, postId) {
+    if (!videoUrl) return null;
+    
+    const encrypted = encryptVideoUrl(videoUrl, postId);
+    if (!encrypted) return null;
+    
+    // Add random suffix to make tokens unique
+    const randomSuffix = Math.random().toString(36).substring(2, 8);
+    return `${encrypted}_${randomSuffix}`;
+}
+
+/**
+ * Process secure video tokens when videos come into view
+ */
+function setupVideoObserver() {
+    const videoObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const video = entry.target;
+                const secureToken = video.dataset.src;
+                
+                if (secureToken && !video.src) {
+                    loadSecureVideo(video, secureToken);
+                }
+                
+                // Auto-play when visible
+                if (video.paused) {
+                    video.play().catch(e => {
+                        console.log('Auto-play blocked:', e);
+                    });
+                }
+            } else {
+                // Pause when not visible
+                const video = entry.target;
+                if (!video.paused) {
+                    video.pause();
+                }
+            }
+        });
+    }, {
+        threshold: 0.5,
+        rootMargin: '100px'
+    });
+    
+    return videoObserver;
+}
+
+// Initialize video observer
+let videoObserver = null;
+
+/**
+ * Load secure video by decrypting token and fetching actual source
+ */
+ async function loadSecureVideo(videoElement, secureToken) {
+    try {
+        // Loading poster
+        videoElement.poster =
+          'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMwMDAiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE2IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+TWVrbyBOZXR3b3JrPC90ZXh0Pjwvc3ZnPg==';
+
+        const encryptedBase64 = secureToken.split('_')[0];
+        if (!encryptedBase64) return;
+
+        const actualVideoUrl = await decryptAndFetchVideoUrl(encryptedBase64);
+
+        if (!actualVideoUrl) {
+            videoElement.poster =
+              'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxMTEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RXJyb3IgbG9hZGluZyB2aWRlbzwvdGV4dD48L3N2Zz4=';
+            return;
+        }
+
+        /* =============================
+           CREATE POSTER FROM VIDEO
+           ============================= */
+
+        const tempVideo = document.createElement("video");
+        tempVideo.src = actualVideoUrl;
+        tempVideo.muted = true;
+        tempVideo.playsInline = true;
+        tempVideo.crossOrigin = "anonymous";
+
+        tempVideo.addEventListener("loadeddata", () => {
+            const canvas = document.createElement("canvas");
+            canvas.width = tempVideo.videoWidth;
+            canvas.height = tempVideo.videoHeight;
+
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(tempVideo, 0, 0, canvas.width, canvas.height);
+
+            // Set poster from first frame
+            videoElement.poster = canvas.toDataURL("image/jpeg", 0.85);
+
+            // Now load real video
+            videoElement.src = actualVideoUrl;
+            videoElement.load();
+        });
+
+    } catch (error) {
+        console.error('Error loading secure video:', error);
+    }
+}
+
+/**
+ * Decrypt and fetch actual video URL
+ */
+async function decryptAndFetchVideoUrl(encryptedBase64) {
+    try {
+        // Method 1: Try to decrypt locally first
+        const decrypted = await decryptVideoToken(encryptedBase64);
+        if (decrypted && decrypted.url) {
+            return decrypted.url;
+        }
+        
+        // Method 2: Fetch from proxy server if local decryption fails
+        return await fetchVideoFromProxy(encryptedBase64);
+        
+    } catch (error) {
+        console.error('Error decrypting video URL:', error);
+        return null;
+    }
+}
+
+/**
+ * Decrypt video token locally
+ */
+async function decryptVideoToken(encryptedBase64) {
+    try {
+        // Reverse the XOR encryption
+        const encrypted = atob(encryptedBase64);
+        let decrypted = '';
+        const key = VIDEO_ENCRYPTION_KEY;
+        
+        for (let i = 0; i < encrypted.length; i++) {
+            const keyChar = key.charCodeAt(i % key.length);
+            const encryptedChar = encrypted.charCodeAt(i);
+            decrypted += String.fromCharCode(encryptedChar ^ keyChar);
+        }
+        
+        // Decode Base64 and parse JSON
+        const decoded = decodeURIComponent(atob(decrypted));
+        const payload = JSON.parse(decoded);
+        
+        // Check if token is expired
+        if (payload.expire && Date.now() > payload.expire) {
+            console.error('Video token has expired');
+            return null;
+        }
+        
+        return payload;
+    } catch (error) {
+        console.error('Local decryption failed:', error);
+        return null;
+    }
+}
+
+/**
+ * Fetch video URL from proxy server
+ */
+async function fetchVideoFromProxy(encryptedBase64) {
+    try {
+        if (!VIDEO_PROXY_URL) {
+            console.error('Video proxy URL not configured');
+            return null;
+        }
+        
+        const response = await fetch(VIDEO_PROXY_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getAuthToken()}`
+            },
+            body: JSON.stringify({
+                token: encryptedBase64,
+                timestamp: Date.now()
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Proxy returned ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.videoUrl) {
+            return data.videoUrl;
+        } else {
+            throw new Error(data.error || 'Invalid response from proxy');
+        }
+    } catch (error) {
+        console.error('Error fetching from proxy:', error);
+        return null;
+    }
+}
+
+/**
+ * Get authentication token for current user
+ */
+function getAuthToken() {
+    if (currentUser && !currentUser.isGuest) {
+        // In a real app, you'd have a proper JWT or session token
+        return btoa(`${currentUser.username}:${Date.now()}`);
+    }
+    return 'guest';
+}
+
+/**
+ * Render media content with secure video handling
+ */
+function renderMediaContent(post, postId) {
+    if (post.iframe) {
+        return `<div class="post-media"><iframe class="post-iframe" src="${post.iframe}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;
+    } else if (post.video) {
+        // Generate secure token for the video
+        const secureToken = generateSecureVideoToken(post.video, postId);
+        
+        if (secureToken) {
+            return `<div class="post-media">
+                <video class="auto-pause-video secure-video" 
+                       data-src="${secureToken}" 
+                       loop controls 
+                       controlsList="nodownload noplaybackrate" 
+                       oncontextmenu="return false;" 
+                       disablePictureInPicture 
+                       style="-webkit-touch-callout:none; -webkit-user-select:none; user-select:none;"
+                       preload="metadata">
+                       <div class="Ksjdu Ksnskd Ksksj Kdnd Ksnd Ksksksld Ksksnd
+                       kddk"></div>
+                    Your browser does not support the video tag.
+                </video>
+                <div class="video-protection-overlay"></div>
+            </div>`;
+        } else {
+            // Fallback to regular video if secure token generation fails
+            return `<div class="post-media">
+                <video class="auto-pause-video" 
+                       src="${post.video}" 
+                       loop controls 
+                       controlsList="nodownload noplaybackrate" 
+                       oncontextmenu="return false;">
+                    Your browser does not support the video tag.
+                </video>
+            </div>`;
+        }
+    } else if (post.image) {
+        return `<div class="post-media"><img src="${post.image}" alt="Post image" loading="lazy" oncontextmenu="return false;" crossorigin="anonymous"></div>`;
+    }
+    return '';
+}
 
 // ==================== AUTH FUNCTIONS ====================
 
@@ -769,6 +1061,7 @@ function showCustomModal(title, content, onOpen = null) {
     // Call onOpen callback
     if (onOpen) onOpen();
 }
+
 function shareToPlatform(platform, url, post) {
     const postContent = post.content ? post.content.substring(0, 100) + (post.content.length > 100 ? '...' : '') : '';
     const text = `Check out this post on Meko Network by @${post.username}: ${postContent}`;
@@ -783,35 +1076,27 @@ function shareToPlatform(platform, url, post) {
     
     switch(platform) {
         case 'whatsapp':
-            // WhatsApp Web API with text only
             shareUrl = `https://wa.me/?text=${encodedText}%20${encodedUrl}`;
             break;
             
         case 'facebook':
-            // Facebook uses Open Graph meta tags, not URL parameters
-            // We'll share with the URL, and Open Graph will handle the preview
             shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
             break;
             
-        case 'x': // Updated from 'twitter' to 'x'
-            // X (Twitter) supports text + URL, but not direct media in share dialog
-            // Cards are handled via Twitter Card meta tags
+        case 'x':
             const hashtags = post.topic ? `&hashtags=${encodeURIComponent(post.topic)}` : '';
             shareUrl = `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}${hashtags}`;
             break;
             
         case 'telegram':
-            // Telegram supports text + URL
             shareUrl = `https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`;
             break;
             
         case 'reddit':
-            // Reddit submission with title
             shareUrl = `https://reddit.com/submit?url=${encodedUrl}&title=${encodedText}`;
             break;
             
         case 'pinterest':
-            // Pinterest supports image URLs
             if (mediaUrl && (post.image || post.video)) {
                 const description = encodeURIComponent(`${text} - Shared from Meko Network`);
                 shareUrl = `https://pinterest.com/pin/create/button/?url=${encodedUrl}&media=${encodedMediaUrl}&description=${description}`;
@@ -821,7 +1106,6 @@ function shareToPlatform(platform, url, post) {
             break;
             
         case 'tumblr':
-            // Tumblr supports various post types
             if (post.image) {
                 shareUrl = `https://www.tumblr.com/widgets/share/tool?posttype=photo&content=${encodedMediaUrl}&caption=${encodedText}&canonicalUrl=${encodedUrl}`;
             } else if (post.video) {
@@ -835,7 +1119,6 @@ function shareToPlatform(platform, url, post) {
             const subject = encodeURIComponent(`Check out this post on Meko Network`);
             let emailBody = `${text}%0A%0A${encodedUrl}%0A%0A`;
             
-            // Add media preview in email body if available
             if (mediaUrl) {
                 if (post.image) {
                     emailBody += `📷 View image: ${mediaUrl}%0A%0A`;
@@ -849,7 +1132,6 @@ function shareToPlatform(platform, url, post) {
             break;
             
         case 'copy':
-            // Copy to clipboard with enhanced text
             let copyText = `${text}\n\n`;
             
             if (mediaUrl) {
@@ -864,7 +1146,6 @@ function shareToPlatform(platform, url, post) {
             
             navigator.clipboard.writeText(copyText)
                 .then(() => {
-                    // Show success message
                     const copyBtn = document.querySelector('.share-platform-btn[data-platform="copy"]');
                     if (copyBtn) {
                         const originalText = copyBtn.innerHTML;
@@ -879,7 +1160,6 @@ function shareToPlatform(platform, url, post) {
                 })
                 .catch(err => {
                     console.error('Failed to copy:', err);
-                    // Fallback for older browsers
                     const textArea = document.createElement('textarea');
                     textArea.value = copyText;
                     document.body.appendChild(textArea);
@@ -889,7 +1169,7 @@ function shareToPlatform(platform, url, post) {
                     
                     alert('Link copied to clipboard!');
                 });
-            return; // Don't open window for copy
+            return;
             
         default:
             return;
@@ -901,13 +1181,11 @@ function shareToPlatform(platform, url, post) {
 }
 
 function getMediaUrlForSharing(post) {
-    // Return the direct media URL for sharing
     if (post.image) {
         return post.image;
     } else if (post.video) {
         return post.video;
     } else if (post.iframe) {
-        // For YouTube/embedded videos, extract thumbnail
         return getYouTubeThumbnail(post.iframe);
     }
     return null;
@@ -919,7 +1197,6 @@ function getYouTubeThumbnail(url) {
     try {
         let videoId = '';
         
-        // Extract video ID from various YouTube URL formats
         if (url.includes('youtube.com/embed/')) {
             videoId = url.split('youtube.com/embed/')[1].split('?')[0];
         } else if (url.includes('youtu.be/')) {
@@ -931,7 +1208,6 @@ function getYouTubeThumbnail(url) {
         }
         
         if (videoId) {
-            // Return max resolution thumbnail
             return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
         }
     } catch (error) {
@@ -1028,6 +1304,7 @@ function updateShareModalHTML(shareUrl, post) {
         </div>
     `;
 }
+
 function sharePost(postId) {
     const post = allPosts.find(p => p.id === postId);
     if (!post) {
@@ -1039,7 +1316,6 @@ function sharePost(postId) {
     const modalContent = updateShareModalHTML(shareUrl, post);
     
     showCustomModal('Share Post', modalContent, () => {
-        // Setup copy button
         const copyBtn = document.getElementById('copyShareUrlBtn');
         if (copyBtn) {
             copyBtn.addEventListener('click', () => {
@@ -1058,7 +1334,6 @@ function sharePost(postId) {
                             }, 2000);
                         })
                         .catch(err => {
-                            // Fallback for older browsers
                             document.execCommand('copy');
                             alert('Link copied to clipboard!');
                         });
@@ -1066,13 +1341,11 @@ function sharePost(postId) {
             });
         }
         
-        // Setup platform buttons
         document.querySelectorAll('.share-platform-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 const platform = this.dataset.platform;
                 shareToPlatform(platform, shareUrl, post);
                 
-                // Close modal after sharing (except for copy)
                 if (platform !== 'copy') {
                     const modal = document.getElementById('customModal');
                     if (modal) {
@@ -1086,6 +1359,7 @@ function sharePost(postId) {
         });
     });
 }
+
 function initializePosts() {
     if (!DATABASEPOSTS || DATABASEPOSTS.length === 0) {
         console.log('No posts data available for initialization');
@@ -1094,27 +1368,14 @@ function initializePosts() {
     
     console.log(`Initializing ${DATABASEPOSTS.length} posts`);
     
-    // Create a copy of the posts
     allPosts = [...DATABASEPOSTS];
     
-    // IMPORTANT: Assign consistent IDs based on position in original array
-    // Since DATABASEPOSTS is the original order from JSON (oldest to newest)
-    // We'll assign IDs where position 0 = oldest, position N = newest
-    
     allPosts.forEach((post, index) => {
-        // Calculate the ID number: (total posts - index) = highest number for newest posts
-        // Example: 100 posts total, index 0 (oldest) = reco100, index 99 (newest) = reco1
         const recoNumber = DATABASEPOSTS.length - index;
-        
-        // Generate consistent ID: meko-username-recoX
-        // Use the actual username from the post
         post.id = `meko-${post.username.toLowerCase()}-reco${recoNumber}`;
-        
-        // Also store the recoNumber for reference
         post.recoNumber = recoNumber;
     });
     
-    // Now reverse to show newest first (with higher reco numbers)
     allPosts = allPosts.reverse();
     
     console.log(`Assigned IDs to ${allPosts.length} posts`);
@@ -1129,7 +1390,6 @@ function initializePosts() {
         recoNumber: allPosts[allPosts.length - 1]?.recoNumber
     });
     
-    // Optional: Shuffle posts for variety (but keep IDs consistent!)
     const seed = Date.now() + Math.random();
     allPosts = shuffleArray(allPosts, seed);
     
@@ -1155,7 +1415,7 @@ function shuffleArray(array, seed) {
 }
 
 function loadPosts() {
-if (!elements.postsFeed) return;
+    if (!elements.postsFeed) return;
     
     if (allPosts.length === 0) {
         console.log('No posts available to load');
@@ -1184,11 +1444,9 @@ if (!elements.postsFeed) return;
         elements.postsFeed.appendChild(postElement);
         displayedPosts.add(post.id);
         
-        // Add share button to the post
         addShareButtonToPost(postElement, post.id);
     });
     
-
     currentPage++;
     
     if (elements.loadMoreBtn) {
@@ -1198,35 +1456,32 @@ if (!elements.postsFeed) return;
     }
 }
 
-
 function loadMorePosts() {
     loadPosts();
 }
+
 function createPostElement(post, postId) {
     const postElement = document.createElement('div');
     postElement.className = 'post-card';
     postElement.dataset.postId = postId;
     postElement.dataset.topic = post.topic || '';
     
-    // ===== ENHANCED AD DETECTION =====  
     const isApiAd = post.iframe && post.iframe === "ad_service-api:290Ae028e028a028_920397Ae828";
     const isAdTopic = post.topic && (post.topic.toLowerCase().includes('ad') || 
-                                     post.topic.toLowerCase().includes('ads') || 
-                                     post.topic.toLowerCase().includes('sponsored'));
-    const isSponsoredName = post.name && post.name.toLowerCase().includes('sponsored');
-    const isCreatorAd = post.topic && (post.topic.toLowerCase() === 'ads' || 
-                                       post.topic.toLowerCase() === 'ads.brand');
+                                     post.topic.toLowerCase().includes('ad_service-api:290Ae028e028a028_920397Ae828'));
+    const isSponsoredName = post.name && post.name.toLowerCase().includes('ad_service-api:290Ae028e028a028_920397Ae828');
+    const isCreatorAd = post.topic && (post.topic.toLowerCase() === 'ad_service-api:290Ae028e028a028_920397Ae828' || 
+                                       post.topic.toLowerCase() === 'ad_service-api:290Ae028e028a028_920397Ae828');
     
-    // Determine ad type
     let adType = null;
     if (isApiAd) {
-        adType = 'API_AD'; // Official API ad
+        adType = 'API_AD';
     } else if (isSponsoredName) {
-        adType = 'SPONSORED_AD'; // Sponsored custom ad
+        adType = 'SPONSORED_AD';
     } else if (isCreatorAd) {
-        adType = 'CREATOR_AD'; // Creator-made ad
+        adType = 'CREATOR_AD';
     } else if (isAdTopic) {
-        adType = 'TOPIC_AD'; // Topic-based ad
+        adType = 'TOPIC_AD';
     }
     
     const isAnyAd = adType !== null;
@@ -1264,7 +1519,6 @@ function createPostElement(post, postId) {
         !currentUser.isGuest &&
         mentionedUsers.includes(currentUser.username);
     
-    // Determine ad label and styling
     let adLabel = '';
     let adClass = '';
     let userDisplayName = post.name;
@@ -1281,31 +1535,25 @@ function createPostElement(post, postId) {
             adLabel = 'Sponsored';
             adClass = 'ad-sponsored';
             userDisplayName = 'Sponsored';
-            userDisplayUsername = '@' + post.username; // Keep original username
+            userDisplayUsername = '@' + post.username;
             break;
         case 'CREATOR_AD':
             adLabel = 'Creator Ad';
             adClass = 'ad-creator';
-            // Keep original name and username
             break;
         case 'TOPIC_AD':
             adLabel = 'Promoted';
             adClass = 'ad-topic';
-            // Keep original name and username
             break;
     }
     
-    // Override renderMediaContent for API ads
     const renderMediaForThisPost = (post) => {
         if (adType === 'API_AD') {
-            // For API ads, return the script container instead of iframe
             return `<div id="ad-${postId}" class="ad-script-container"></div>`;
         }
-        // For other posts, use the regular renderMediaContent
-        return renderMediaContent(post);
+        return renderMediaContent(post, postId); // Pass postId here
     };
     
-    // ===== HTML =====  
     postElement.innerHTML = `  
         <div class="post-header ${adClass}">  
             <div class="post-user" ${!isAnyAd ? `data-username="${post.username}"` : ''}>  
@@ -1362,12 +1610,10 @@ function createPostElement(post, postId) {
         `}  
     `;
     
-    // ===== INJECT AD SCRIPT FOR API ADS =====  
     if (adType === 'API_AD') {
         const adContainer = postElement.querySelector(`#ad-${postId}`);
         if (adContainer) {
-  // Inject both scripts as HTML
-adContainer.innerHTML = `
+            adContainer.innerHTML = `
 <script type="text/javascript">
   atOptions = {
   	'key' : 'd00f4eb20818128f182b8839788682d3',
@@ -1383,25 +1629,20 @@ adContainer.innerHTML = `
 ></script>
 `;
         }
-        
-        // API ads don't have regular interactions
         return postElement;
     }
     
-    // ===== VIDEO OBSERVER =====  
-    const videoElement = postElement.querySelector('.auto-pause-video');
-    if (videoElement && typeof postVideoObserver !== 'undefined') {
-        postVideoObserver.observe(videoElement);
+    const videoElement = postElement.querySelector('.secure-video');
+    if (videoElement && videoObserver) {
+        videoObserver.observe(videoElement);
     }
     
-    // ===== LIKE BUTTON =====  
     if (!isAnyAd) {
         const likeBtn = postElement.querySelector('[data-action="like"]');
         if (likeBtn) {
             likeBtn.addEventListener('click', () => handleLike(postId, likeBtn));
         }
     } else if (adType === 'CREATOR_AD' || adType === 'TOPIC_AD') {
-        // Creator/topic ads can still be liked
         const likeBtn = postElement.querySelector('[data-action="like"]');
         if (likeBtn) {
             likeBtn.addEventListener('click', () => {
@@ -1412,7 +1653,6 @@ adContainer.innerHTML = `
                 handleLike(postId, likeBtn);
             });
         } else {
-            // If no like button, make the ad-likes clickable
             const adLikes = postElement.querySelector('.ad-likes');
             if (adLikes) {
                 adLikes.style.cursor = 'pointer';
@@ -1427,7 +1667,6 @@ adContainer.innerHTML = `
         }
     }
     
-    // ===== USER PROFILE =====  
     if (!isAnyAd || adType === 'CREATOR_AD' || adType === 'TOPIC_AD') {
         const userInfo = postElement.querySelector('.post-user');
         if (userInfo) {
@@ -1437,7 +1676,6 @@ adContainer.innerHTML = `
         }
     }
     
-    // ===== MENTIONS =====  
     if (!isAnyAd || adType === 'CREATOR_AD' || adType === 'TOPIC_AD') {
         postElement.querySelectorAll('.mention').forEach(mention => {
             mention.addEventListener('click', e => {
@@ -1450,7 +1688,8 @@ adContainer.innerHTML = `
             });
         });
     }
-  if (!isAnyAd || adType === 'CREATOR_AD' || adType === 'TOPIC_AD') {
+    
+    if (!isAnyAd || adType === 'CREATOR_AD' || adType === 'TOPIC_AD') {
         const shareBtn = postElement.querySelector('.share-btn');
         if (shareBtn) {
             shareBtn.addEventListener('click', function(e) {
@@ -1458,59 +1697,49 @@ adContainer.innerHTML = `
                 sharePost(postId);
             });
         } else {
-            // If not in HTML, add it programmatically
             setTimeout(() => addShareButtonToPost(postElement, postId), 100);
         }
     }
+
     return postElement;
 }
-// Helper function to convert YouTube URLs to embed format
+
+// ==================== VIDEO HELPER FUNCTIONS ====================
+
 function convertToEmbedUrl(url) {
     if (!url) return null;
     
     try {
-        // Clean up URL - remove any extra parameters that might interfere
-        let cleanUrl = url.split('&')[0]; // Take only the first parameter segment
+        let cleanUrl = url.split('&')[0];
         
-        // YouTube Shorts format: https://youtube.com/shorts/VIDEO_ID
-        // Also handles: m.youtube.com/shorts/, www.youtube.com/shorts/
         if (cleanUrl.includes('/shorts/')) {
             const videoId = cleanUrl.split('/shorts/')[1].split('?')[0];
             return `https://www.youtube.com/embed/${videoId}`;
         }
         
-        // Extract video ID from various YouTube URL formats
         let videoId = '';
         
-        // Mobile format: https://m.youtube.com/watch?si=...&v=VIDEO_ID&feature=...
         if (cleanUrl.includes('m.youtube.com/watch') || cleanUrl.includes('youtube.com/watch')) {
-            // Use URL API to parse query parameters
             try {
                 const urlObj = new URL(url);
                 videoId = urlObj.searchParams.get('v');
             } catch {
-                // Fallback regex for mobile URLs
                 const match = url.match(/[?&]v=([^&]+)/);
                 videoId = match ? match[1] : '';
             }
         }
-        // youtu.be format: https://youtu.be/VIDEO_ID
         else if (cleanUrl.includes('youtu.be/')) {
             videoId = cleanUrl.split('youtu.be/')[1].split('?')[0];
         }
-        // Feature format: https://www.youtube.com/watch?feature=youtu.be&v=VIDEO_ID
         else if (cleanUrl.includes('youtube.com') && cleanUrl.includes('v=')) {
             const match = cleanUrl.match(/v=([^&]+)/);
             videoId = match ? match[1] : '';
         }
         
-        // Clean up video ID (remove any trailing junk)
         if (videoId) {
             videoId = videoId.split('&')[0].split('#')[0].split('?')[0];
             
-            // Validate video ID format (should be 11 characters for standard YouTube)
             if (videoId.length >= 11) {
-                // Take only the first 11 characters (standard YouTube ID length)
                 videoId = videoId.substring(0, 11);
             }
             
@@ -1519,7 +1748,6 @@ function convertToEmbedUrl(url) {
             }
         }
         
-        // If it's already an embed URL, return as-is
         if (cleanUrl.includes('youtube.com/embed/')) {
             return cleanUrl;
         }
@@ -1531,7 +1759,6 @@ function convertToEmbedUrl(url) {
     }
 }
 
-// Enhanced isYouTubeUrl function
 function isYouTubeUrl(url) {
     if (!url) return false;
     
@@ -1543,21 +1770,6 @@ function isYouTubeUrl(url) {
     ];
     
     return youtubePatterns.some(pattern => url.includes(pattern));
-} 
-
-function renderMediaContent(post) {
-    if (post.iframe) {
-        return `<div class="post-media"><iframe class="post-iframe" src="${post.iframe}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;
-    } else if (post.video) {
-        return `<div class="post-media">
-            <video class="auto-pause-video" src="${post.video}" loop controls controlsList="nodownload noplaybackrate" oncontextmenu="return false;" disablePictureInPicture style="-webkit-touch-callout:none; -webkit-user-select:none; user-select:none;">
-                Your browser does not support the video tag.
-            </video>
-        </div>`;
-    } else if (post.image) {
-        return `<div class="post-media"><img src="${post.image}" alt="Post image" loading="lazy" oncontextmenu="return false;"></div>`;
-    }
-    return '';
 }
 
 function getMentionsForUser(username) {
@@ -1587,20 +1799,16 @@ function getMentionsForUser(username) {
 
 function parseCustomDate(dateString) {
     try {
-        
-        
         const months = {
             'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
             'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
         };
         
-        // Handle different date formats
         if (!dateString || typeof dateString !== 'string') {
             console.warn('Invalid date input:', dateString);
             return new Date();
         }
         
-        // Parse format: "Dec 13 2025 2:28PM"
         const parts = dateString.split(' ');
         
         if (parts.length < 4) {
@@ -1611,7 +1819,7 @@ function parseCustomDate(dateString) {
         const monthAbbr = parts[0];
         const day = parseInt(parts[1]);
         const year = parseInt(parts[2]);
-        const timePart = parts[3]; // "2:28PM"
+        const timePart = parts[3];
         
         const month = months[monthAbbr];
         if (month === undefined) {
@@ -1619,15 +1827,12 @@ function parseCustomDate(dateString) {
             return new Date();
         }
         
-        // Parse time with AM/PM directly attached
         const timeMatch = timePart.match(/(\d+):(\d+)(AM|PM)/i);
         if (!timeMatch) {
             console.warn('Invalid time format, trying alternative:', timePart);
-            // Try alternative format with space
             const altParts = dateString.split(' ');
             if (altParts.length >= 5) {
-                // Format: "Dec 13 2025 2:28 PM"
-                const altTimePart = altParts[3] + altParts[4]; // Combine "2:28" + "PM"
+                const altTimePart = altParts[3] + altParts[4];
                 const altTimeMatch = altTimePart.match(/(\d+):(\d+)(AM|PM)/i);
                 if (altTimeMatch) {
                     let hours = parseInt(altTimeMatch[1]);
@@ -1647,7 +1852,6 @@ function parseCustomDate(dateString) {
         const minutes = parseInt(timeMatch[2]);
         const ampm = timeMatch[3].toUpperCase();
         
-        // Convert 12-hour to 24-hour format
         if (ampm === 'PM' && hours < 12) {
             hours += 12;
         }
@@ -1674,7 +1878,7 @@ function formatDateToCustom(date) {
         const ampm = hours >= 12 ? 'PM' : 'AM';
         
         hours = hours % 12;
-        hours = hours ? hours : 12; // Convert 0 to 12
+        hours = hours ? hours : 12;
         
         return `${month} ${day} ${year} ${hours}:${minutes}${ampm}`;
     } catch (error) {
@@ -1695,23 +1899,21 @@ function formatJoinedDate(date) {
         return 'Recently';
     }
 }
-// Sound variables
+
+// ==================== SOUND FUNCTIONS ====================
+
 let likeSound = null;
 let unlikeSound = null;
 let soundsLoaded = false;
 
-// Initialize sounds
 function initSounds() {
     try {
-        // Create audio objects
         likeSound = new Audio();
         unlikeSound = new Audio();
         
-        // Set sources (update paths as needed)
         likeSound.src = 'sounds/like.mp3';
         unlikeSound.src = 'sounds/unlike.mp3';
         
-        // Preload
         likeSound.preload = 'auto';
         unlikeSound.preload = 'auto';
         likeSound.load();
@@ -1725,10 +1927,6 @@ function initSounds() {
     }
 }
 
-// Call this when your app loads
-document.addEventListener('DOMContentLoaded', initSounds);
-
-// Updated sound functions
 function playLikeSound() {
     if (!soundsLoaded || !likeSound) {
         playFallbackSound('like');
@@ -1736,11 +1934,8 @@ function playLikeSound() {
     }
     
     try {
-        // Reset sound to start
         likeSound.currentTime = 0;
-        // Set volume
         likeSound.volume = 0.5;
-        // Play
         likeSound.play().catch(e => {
             console.log('Could not play like sound:', e);
             playFallbackSound('like');
@@ -1758,11 +1953,8 @@ function playUnlikeSound() {
     }
     
     try {
-        // Reset sound to start
         unlikeSound.currentTime = 0;
-        // Set volume
         unlikeSound.volume = 0.3;
-        // Play
         unlikeSound.play().catch(e => {
             console.log('Could not play unlike sound:', e);
             playFallbackSound('unlike');
@@ -1773,7 +1965,6 @@ function playUnlikeSound() {
     }
 }
 
-// Keep your fallback sound for when MP3s fail
 function playFallbackSound(type) {
     try {
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -1788,12 +1979,8 @@ function playFallbackSound(type) {
     }
 }
 
-// Optional: Add sound toggle functionality
 let soundEnabled = true;
 
-
-
-// Modify your handleLike function to respect sound setting
 function handleLike(postId, button) {
     if (!currentUser || currentUser.isGuest) {
         alert('Please login to like posts!');
@@ -1844,6 +2031,7 @@ function handleLike(postId, button) {
     
     saveCurrentUser();
 }
+
 function scrollToPost(postId) {
     const postElement = document.querySelector(`[data-post-id="${postId}"]`);
     if (postElement) {
@@ -2276,7 +2464,6 @@ function showOwnProfile() {
         return;
     }
     
-    // Find posts made by the current user
     const userPosts = DATABASEPOSTS.filter(post => 
         post.username === currentUser.username || 
         post.username.toLowerCase() === currentUser.username.toLowerCase()
@@ -2285,7 +2472,6 @@ function showOwnProfile() {
     console.log(`Found ${userPosts.length} posts for user ${currentUser.username}`);
     
     if (userPosts.length === 0) {
-        // Show profile even if user has no posts
         showUserProfile(currentUser.username, currentUser.name, true);
         return;
     }
@@ -2296,7 +2482,6 @@ function showOwnProfile() {
 function showUserProfile(username, name, isOwnProfile = false) {
     console.log(`Showing profile for ${username} (isOwnProfile: ${isOwnProfile})`);
     
-    // Find all posts by this user (case-insensitive match)
     const userPosts = DATABASEPOSTS.filter(post => 
         post.username === username || 
         post.username.toLowerCase() === username.toLowerCase()
@@ -2309,17 +2494,11 @@ function showUserProfile(username, name, isOwnProfile = false) {
         return;
     }
     
-    // Calculate statistics
     const totalLikes = userPosts.reduce((sum, post) => sum + post.likes, 0);
     const postsCount = userPosts.length;
-    
-    // Find mentions of this user
     const userMentions = getMentionsForUser(username);
-    
-    // Calculate average likes per post
     const averageLikes = postsCount > 0 ? Math.round(totalLikes / postsCount) : 0;
     
-    // Find first post date for joined date
     let joinedDate = 'Recently';
     if (userPosts.length > 0) {
         const sortedPosts = [...userPosts].sort((a, b) => {
@@ -2334,7 +2513,6 @@ function showUserProfile(username, name, isOwnProfile = false) {
         }
     }
     
-    // Update profile header
     const profileHeader = document.getElementById('profileHeader');
     if (profileHeader) {
         profileHeader.innerHTML = `
@@ -2384,11 +2562,9 @@ function showUserProfile(username, name, isOwnProfile = false) {
         `;
     }
     
-    // Update profile name
     const profileNameElement = document.getElementById('profileName');
     if (profileNameElement) profileNameElement.textContent = name;
     
-    // Create profile content
     const profilePosts = document.getElementById('profilePosts');
     if (profilePosts) {
         profilePosts.innerHTML = '';
@@ -2419,18 +2595,15 @@ function showUserProfile(username, name, isOwnProfile = false) {
         
         profilePosts.innerHTML = tabsHTML;
         
-        // Populate posts tab
         const postsTab = document.getElementById('postsTab');
         if (userPosts.length > 0) {
-            // Sort posts by date (newest first)
             const userPostsSorted = [...userPosts].sort((a, b) => {
                 const dateA = parseCustomDate(a.datePost);
                 const dateB = parseCustomDate(b.datePost);
-                return dateB - dateA; // Newest first
+                return dateB - dateA;
             });
             
             userPostsSorted.forEach((post) => {
-                // Find the post in allPosts to get its ID
                 const foundPost = allPosts.find(p => 
                     p.username === post.username && 
                     p.datePost === post.datePost &&
@@ -2441,7 +2614,6 @@ function showUserProfile(username, name, isOwnProfile = false) {
                     const postElement = createPostElement(foundPost, foundPost.id);
                     postsTab.appendChild(postElement);
                 } else {
-                    // If not found in allPosts, create with a temporary ID
                     const tempId = Date.now() + Math.random();
                     const postElement = createPostElement(post, tempId);
                     postsTab.appendChild(postElement);
@@ -2462,7 +2634,6 @@ function showUserProfile(username, name, isOwnProfile = false) {
             `;
         }
         
-        // Populate mentions tab
         const mentionsTab = document.getElementById('mentionsTab');
         if (userMentions.length > 0) {
             userMentions.forEach(mention => {
@@ -2482,16 +2653,14 @@ function showUserProfile(username, name, isOwnProfile = false) {
             `;
         }
         
-        // Populate liked posts tab (only for own profile)
         if (isOwnProfile) {
             const likedTab = document.getElementById('likedTab');
             const likedPosts = Array.from(currentUser?.likedPosts || []);
             
             if (likedPosts.length > 0) {
-                // Get actual post objects for liked post IDs
                 const likedPostObjects = likedPosts
                     .map(postId => allPosts.find(p => p.id === postId))
-                    .filter(post => post); // Remove undefined
+                    .filter(post => post);
                 
                 likedPostObjects.forEach(post => {
                     const postElement = createPostElement(post, post.id);
@@ -2508,16 +2677,13 @@ function showUserProfile(username, name, isOwnProfile = false) {
             }
         }
         
-        // Add tab click event listeners
         document.querySelectorAll('.profile-tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 const tabName = tab.dataset.tab;
                 
-                // Update active tab
                 document.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
                 
-                // Update active content
                 document.querySelectorAll('.tab-content').forEach(content => {
                     content.classList.remove('active');
                 });
@@ -2526,37 +2692,9 @@ function showUserProfile(username, name, isOwnProfile = false) {
         });
     }
     
-    // Show the profile modal
     if (elements.profileModal) {
         elements.profileModal.classList.add('active');
     }
-}
-
-// Enhanced getMentionsForUser function
-function getMentionsForUser(username) {
-    const userMentions = [];
-    
-    // Use allPosts instead of DATABASEPOSTS to get proper IDs
-    allPosts.forEach((post, index) => {
-        if (post.content && post.content.toLowerCase().includes(`@${username.toLowerCase()}`)) {
-            userMentions.push({
-                postId: post.id,
-                post: post,
-                datePost: parseCustomDate(post.datePost),
-                mentionedBy: post.username,
-                mentionedByName: post.name,
-                topic: post.topic || '',
-                content: post.content,
-                excerpt: post.content.length > 100 ? 
-                    post.content.substring(0, 100) + '...' : 
-                    post.content
-            });
-        }
-    });
-    
-    // Sort by date (newest first)
-    userMentions.sort((a, b) => b.datePost - a.datePost);
-    return userMentions;
 }
 
 // ==================== POST CREATION FUNCTIONS ====================
@@ -2790,6 +2928,12 @@ function toggleTheme() {
 // ==================== SETUP & INITIALIZATION ====================
 
 function setupEventListeners() {
+    // Initialize video observer
+    videoObserver = setupVideoObserver();
+    
+    // Initialize sounds
+    initSounds();
+    
     // Auth event listeners
     if (elements.authTabs) {
         elements.authTabs.forEach(tab => {
@@ -2830,8 +2974,6 @@ function setupEventListeners() {
         elements.bottomSearchBtn.addEventListener('click', toggleSearchBar);
     }
     
-    // Post creation
-
     // Modal controls
     if (elements.closeProfileModal) {
         elements.closeProfileModal.addEventListener('click', () => {
@@ -2885,14 +3027,12 @@ function setupEventListeners() {
         });
     }
     
-    // Also update the user menu toggle to close when clicking profile
     if (elements.userMenu && elements.menuToggle) {
         elements.menuToggle.addEventListener('click', (e) => {
             e.stopPropagation();
             toggleUserMenu();
         });
         
-        // Close menu when clicking profile link inside it
         const menuProfileLink = elements.userMenu.querySelector('#profileLink');
         if (menuProfileLink) {
             menuProfileLink.addEventListener('click', (e) => {
@@ -2968,10 +3108,8 @@ function setupEventListeners() {
             document.querySelector('.search-bar')?.classList.remove('active');
         }
     });
-document.addEventListener('keydown', (e) => {
+    document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
-            // ... existing escape handlers ...
-            
             const shareModal = document.getElementById('sharePostModal');
             if (shareModal && shareModal.classList.contains('active')) {
                 closeSharePostModal();
@@ -2984,25 +3122,20 @@ function processPosts(postsArray) {
     console.log('Processing posts data...');
 
     if (!Array.isArray(postsArray)) {
-        
         postsArray = [];
     }
 
-    // Validate posts (more lenient for testing)
     const validPosts = postsArray.filter(post => {
         if (!post || typeof post !== 'object') {
             console.log('Skipping invalid post object:', post);
             return false;
         }
         
-        // Check required fields
         const hasRequired = post.name && post.username && post.datePost;
         if (!hasRequired) {
-            
             return false;
         }
         
-        // Try to parse date
         try {
             const parsedDate = parseCustomDate(post.datePost);
             const isValidDate = !isNaN(parsedDate.getTime());
@@ -3011,38 +3144,29 @@ function processPosts(postsArray) {
             }
             return isValidDate;
         } catch {
-            
             return false;
         }
     });
 
-    
     if (validPosts.length === 0) {
-        
         renderEmptyState();
         return;
     }
 
-    // Store the posts
     DATABASEPOSTS = [...validPosts];
 
-    // Reset UI
     if (elements.postsFeed) elements.postsFeed.innerHTML = '';
     displayedPosts.clear();
     currentPage = 0;
     allPosts = [];
 
-    // Debug log first few posts
-    ;
     DATABASEPOSTS.slice(0, 3).forEach((p, i) => {
-        
     });
 
-    // Initialize everything
-    initializePosts(); // This creates allPosts from DATABASEPOSTS
+    initializePosts();
     loadTrendingTopics();
     loadSuggestedProfiles();
-    loadPosts(); // This displays the posts
+    loadPosts();
 
     if (elements.loadMoreBtn) {
         elements.loadMoreBtn.style.display = 'block';
@@ -3053,26 +3177,18 @@ function processPosts(postsArray) {
     console.log('Posts processing complete.');
 }
 
-// ==================== FETCH POSTS (LOCAL JSON) ====================
 const JSON_URL = "database_827_383_294_103_759_927_953.json";
 
-// ==================== JSON STRUCTURE EXTRACTOR ====================
 function extractPostsFromJSON(data) {
     if (!data) {
-        
         return [];
     }
 
     console.log("Data type:", typeof data);
     
-    // If data is already the array (which it should be)
     if (Array.isArray(data)) {
-        
         return data;
     }
-    
-    // If data is not an array, log what we got
-    
     
     return [];
 }
@@ -3089,7 +3205,6 @@ function fetchPosts() {
         `;
     }
 
-    // Add timeout to prevent hanging
     const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => reject(new Error('Request timeout after 10 seconds')), 10000);
     });
@@ -3111,13 +3226,10 @@ function fetchPosts() {
         .then(text => {
             console.log("Raw response received, length:", text.length);
             
-            // Clean the text first
             let cleanedText = text.trim();
             
-            // Check if the JSON is complete
             if (!cleanedText.endsWith('}') && !cleanedText.endsWith(']')) {
                 console.warn("JSON might be truncated, attempting to fix...");
-                // Try to find the last complete object
                 const lastBrace = cleanedText.lastIndexOf('}');
                 const lastBracket = cleanedText.lastIndexOf(']');
                 const cutIndex = Math.max(lastBrace, lastBracket);
@@ -3128,7 +3240,6 @@ function fetchPosts() {
                 }
             }
             
-            // Try to parse
             try {
                 const data = JSON.parse(cleanedText);
                 console.log("JSON parsed successfully");
@@ -3145,7 +3256,6 @@ function fetchPosts() {
                 }
             } catch (parseError) {
                 console.error("JSON parse error:", parseError.message);
-                console.error("Problem area (around error):");
                 const errorIndex = parseError.message.match(/position (\d+)/);
                 if (errorIndex) {
                     const idx = parseInt(errorIndex[1]);
@@ -3163,7 +3273,6 @@ function fetchPosts() {
         });
 }
 
-// ==================== UI HELPERS ====================
 function renderEmptyState() {
     if (!elements.postsFeed) return;
 
@@ -3198,40 +3307,31 @@ function renderErrorState(message) {
     `;
 }
 
-// ==================== INITIALIZE APP ====================
-
 function initializeApp() {
     console.log("Initializing app...");
     
-    // Make sure elements exist
     if (!elements || !elements.postsFeed) {
         console.error("DOM elements not ready yet!");
         setTimeout(initializeApp, 100);
         return;
     }
     
-    // Set up event listeners
     setupEventListeners();
     setupTheme();
     
-    // Check for shared post in URL FIRST
     processUrlParameters();
     
-    // Then fetch posts
     fetchPosts();
     
-    // Then check auth
     checkAuth();
 }
 
-// Start the app when DOM is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeApp);
 } else {
     initializeApp();
 }
 
-// Add CSS for spinner animation
 const style = document.createElement('style');
 style.textContent = `
 @keyframes spin {
@@ -3240,7 +3340,6 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-// Debug function
 function debugFetch() {
     console.log("=== DEBUG FETCH ===");
     console.log("URL:", JSON_URL);
@@ -3255,7 +3354,6 @@ function debugFetch() {
             console.log("First 1000 chars:", t.substring(0, 1000));
             console.log("Last 200 chars:", t.substring(t.length - 200));
             
-            // Check for missing brackets
             const openBraces = (t.match(/{/g) || []).length;
             const closeBraces = (t.match(/}/g) || []).length;
             const openBrackets = (t.match(/\[/g) || []).length;
@@ -3279,5 +3377,4 @@ function debugFetch() {
             }
         })
         .catch(console.error);
-}
-
+                }
