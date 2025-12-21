@@ -1,567 +1,723 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-
   <meta name="google-site-verification" content="mfL7X8QV4uvLoRzVLHX_bXLtEiLdTanYXOCpEotxO7Q" />
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MekoNetwork — A Safe Haven Social Media</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="icon" type="image/x-icon"
-    href="https://penutcreation.github.io/MEKO/og-image.jpg">
-    <!-- ===================== -->
-<!-- Basic SEO By DERAMTHEDEV-->
-<!-- ===================== -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>MekoMedia — A Safe Haven Social Media</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/x-icon" href="https://penutcreation.github.io/MEKO/og-image.jpg">
+  
+  <!-- ===================== -->
+  <!-- Basic SEO By DERAMTHEDEV-->
+  <!-- ===================== -->
+  <meta name="description" content="MekoNetwork is a safe haven social media platform where you can share posts and videos, react, connect with others, and support communities worldwide.">
+  <meta name="keywords" content="MekoNetwork, social media, safe social network, share videos, online community, react, support platform">
+  <meta name="author" content="MEKO">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://penutcreation.github.io/MEKO/">
 
+  <!-- ===================== -->
+  <!-- Open Graph (Facebook, Messenger, Instagram) -->
+  <!-- ===================== -->
+  <meta property="og:site_name" content="MekoNetwork">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://penutcreation.github.io/MEKO/">
+  <meta property="og:title" content="MekoNetwork — A Safe Haven Social Media">
+  <meta property="og:description" content="Share posts and videos, react freely, connect with others, and support communities in a safe social space.">
+  <meta property="og:image" content="https://penutcreation.github.io/MEKO/og-image.jpg">
+  <meta property="og:image:secure_url" content="https://penutcreation.github.io/MEKO/og-image.jpg">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
 
-<meta name="description" content="MekoNetwork is a safe haven social media platform where you can share posts and videos, react, connect with others, and support communities worldwide.">
+  <!-- ===================== -->
+  <!-- Twitter / X -->
+  <!-- ===================== -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="MekoNetwork — A Safe Haven Social Media">
+  <meta name="twitter:description" content="A safe social media platform to share videos, react, and support people around the world.">
+  <meta name="twitter:image" content="https://penutcreation.github.io/MEKO/og-image.jpg">
+  <meta name="twitter:site" content="@MekoNetwork">
+  <meta name="twitter:creator" content="@MekoNetwork">
 
-<meta name="keywords" content="MekoNetwork, social media, safe social network, share videos, online community, react, support platform">
+  <!-- ===================== -->
+  <!-- Mobile / App Sharing Optimization -->
+  <!-- ===================== -->
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  
+  <style>
+    /* Custom Video Player Styles */
+    .custom-video-player {
+      position: relative;
+      width: 100%;
+      max-height: 600px;
+      background: #000;
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 1rem 0;
+    }
 
-<meta name="author" content="MEKO">
-<meta name="robots" content="index, follow">
-<link rel="canonical" href="https://penutcreation.github.io/MEKO/">
+    .custom-video-player video {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
 
-<!-- ===================== -->
-<!-- Open Graph (Facebook, Messenger, Instagram) -->
-<!-- ===================== -->
-<meta property="og:site_name" content="MekoNetwork">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://penutcreation.github.io/MEKO/">
+    .video-controls {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(transparent, rgba(0,0,0,0.7));
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
 
-<meta property="og:title" content="MekoNetwork — A Safe Haven Social Media">
-<meta property="og:description" content="Share posts and videos, react freely, connect with others, and support communities in a safe social space.">
+    .custom-video-player:hover .video-controls {
+      opacity: 1;
+    }
 
-<meta property="og:image" content="https://penutcreation.github.io/MEKO/og-image.jpg">
-<meta property="og:image:secure_url"
-content="https://penutcreation.github.io/MEKO/og-image.jpg">
-<meta property="og:image:type" content="image/jpeg">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
+    .control-btn {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s;
+    }
 
-<!-- ===================== -->
-<!-- Twitter / X -->
-<!-- ===================== -->
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="MekoNetwork — A Safe Haven Social Media">
-<meta name="twitter:description" content="A safe social media platform to share videos, react, and support people around the world.">
-<meta name="twitter:image" content="https://penutcreation.github.io/MEKO/og-image.jpg">
+    .control-btn:hover {
+      background: rgba(255,255,255,0.3);
+      transform: scale(1.1);
+    }
 
-<!-- Optional branding -->
-<meta name="twitter:site" content="@MekoNetwork">
-<meta name="twitter:creator" content="@MekoNetwork">
+    .progress-bar {
+      flex: 1;
+      height: 4px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 2px;
+      position: relative;
+      cursor: pointer;
+    }
 
-<!-- ===================== -->
-<!-- Mobile / App Sharing Optimization -->
-<!-- ===================== -->
-<meta name="theme-color" content="#0f172a">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    .progress-filled {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+      width: 0%;
+    }
+
+    .time-display {
+      color: white;
+      font-size: 0.9rem;
+      min-width: 100px;
+      text-align: center;
+    }
+
+    .volume-control {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .volume-slider {
+      width: 80px;
+      height: 4px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 2px;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .volume-level {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      background: white;
+      border-radius: 2px;
+      width: 70%;
+    }
+
+    .fullscreen-btn {
+      margin-left: auto;
+    }
+
+    .video-loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 1.5rem;
+    }
+
+    .video-error {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #ff6b6b;
+      text-align: center;
+      padding: 1rem;
+    }
+
+    /* Video indicator badge */
+    .video-indicator {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      z-index: 2;
+    }
+
+    /* Video section header */
+    .video-section-header {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      margin-bottom: 1rem;
+      text-align: center;
+      padding: 1.5rem;
+    }
+
+    .video-section-header i {
+      font-size: 2rem;
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+    }
+
+    .video-section-header h2 {
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+    }
+
+    .video-section-header p {
+      color: var(--text-secondary);
+    }
+
+    /* Active state for video navigation */
+    .nav-item.video-active,
+    .mobile-nav-item.video-active,
+    .bottom-nav-item.video-active {
+      color: var(--accent) !important;
+      background: rgba(59, 130, 246, 0.1) !important;
+    }
+
+    .nav-item.video-active i,
+    .mobile-nav-item.video-active i,
+    .bottom-nav-item.video-active i {
+      color: var(--accent) !important;
+    }
+  </style>
+</head>
 <body class="dark-mode">
-    <!-- Login/Signup Modal -->
-    <div class="modal active" id="authModal">
-        <div class="modal-content auth-modal">
-            <div class="auth-header">
-                <h1 class="logo">MekoNetwork</h1>
-                <p class="auth-subtitle">Connect with friends and the world around you</p>
-            </div>
-            
-            <div class="auth-tabs">
-                <button class="auth-tab active" data-tab="login">Log In</button>
-                <button class="auth-tab" data-tab="signup">Sign Up</button>
-            </div>
-            
-            <!-- Login Form -->
-            <form class="auth-form active" id="loginForm">
-                <div class="form-group">
-                    <input type="text" id="loginUsername" placeholder="Username" required>
-                    <i class="fas fa-user"></i>
-                </div>
-                <div class="form-group">
-                    <input type="password" id="loginPassword" placeholder="Password" required>
-                    <i class="fas fa-lock"></i>
-                </div>
-                <div class="form-options">
-                    <label class="checkbox">
-                        <input type="checkbox" id="rememberMe">
-                        <span>Remember me</span>
-                    </label>
-                    <a href="#" class="forgot-link">Forgot password?</a>
-                </div>
-                <button type="submit" class="btn btn-primary btn-block">Log In</button>
-                <div class="auth-divider">
-                    <span>or</span>
-                </div>
-                <button type="button" class="btn btn-secondary btn-block" id="createNewAccount">
-                    Create New Account
-                </button>
-            </form>
-            
-            <!-- Signup Form -->
-            <form class="auth-form" id="signupForm">
-                <div class="form-group">
-                    <input type="text" id="signupName" placeholder="Full Name" required>
-                    <i class="fas fa-user"></i>
-                </div>
-                <div class="form-group">
-                    <input type="text" id="signupUsername" placeholder="Username" required>
-                    <i class="fas fa-at"></i>
-                    <small class="error-message" id="usernameError"></small>
-                </div>
-                <div class="form-group">
-                    <input type="email" id="signupEmail" placeholder="Email Address" required>
-                    <i class="fas fa-envelope"></i>
-                </div>
-                <div class="form-group">
-                    <input type="password" id="signupPassword" placeholder="Password" required>
-                    <i class="fas fa-lock"></i>
-                </div>
-                <div class="form-group">
-                    <input type="password" id="signupConfirmPassword" placeholder="Confirm Password" required>
-                    <i class="fas fa-lock"></i>
-                </div>
-                <div class="form-options">
-                    <label class="checkbox">
-                        <input type="checkbox" id="termsAgree" required>
-                        <span>I agree to the <a href="PolicyAndService.html">Terms & Conditions</a></span>
-                    </label>
-                </div>
-                <div class="error-message" id="loginError" style="display: none;"></div>
-                <button type="submit" class="btn btn-primary btn-block">Sign Up</button>
-            </form>
-            
-            <div class="auth-footer">
-                <p>By continuing, you agree to MekoNetwork's 
-                <a href="PolicyAndService.html">Terms of Service</a> and <a href="PolicyAndService.html">Privacy Policy</a>.</p>
-            </div>
+  <!-- Login/Signup Modal -->
+  <div class="modal active" id="authModal">
+    <div class="modal-content auth-modal">
+      <div class="auth-header">
+        <h1 class="logo">MekoNetwork</h1>
+        <p class="auth-subtitle">Connect with friends and the world around you</p>
+      </div>
+      
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="login">Log In</button>
+        <button class="auth-tab" data-tab="signup">Sign Up</button>
+      </div>
+      
+      <!-- Login Form -->
+      <form class="auth-form active" id="loginForm">
+        <div class="form-group">
+          <input type="text" id="loginUsername" placeholder="Username" required>
+          <i class="fas fa-user"></i>
         </div>
+        <div class="form-group">
+          <input type="password" id="loginPassword" placeholder="Password" required>
+          <i class="fas fa-lock"></i>
+        </div>
+        <div class="form-options">
+          <label class="checkbox">
+            <input type="checkbox" id="rememberMe">
+            <span>Remember me</span>
+          </label>
+          <a href="#" class="forgot-link">Forgot password?</a>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Log In</button>
+        <div class="auth-divider">
+          <span>or</span>
+        </div>
+        <button type="button" class="btn btn-secondary btn-block" id="createNewAccount">
+          Create New Account
+        </button>
+      </form>
+      
+      <!-- Signup Form -->
+      <form class="auth-form" id="signupForm">
+        <div class="form-group">
+          <input type="text" id="signupName" placeholder="Full Name" required>
+          <i class="fas fa-user"></i>
+        </div>
+        <div class="form-group">
+          <input type="text" id="signupUsername" placeholder="Username" required>
+          <i class="fas fa-at"></i>
+          <small class="error-message" id="usernameError"></small>
+        </div>
+        <div class="form-group">
+          <input type="email" id="signupEmail" placeholder="Email Address" required>
+          <i class="fas fa-envelope"></i>
+        </div>
+        <div class="form-group">
+          <input type="password" id="signupPassword" placeholder="Password" required>
+          <i class="fas fa-lock"></i>
+        </div>
+        <div class="form-group">
+          <input type="password" id="signupConfirmPassword" placeholder="Confirm Password" required>
+          <i class="fas fa-lock"></i>
+        </div>
+        <div class="form-options">
+          <label class="checkbox">
+            <input type="checkbox" id="termsAgree" required>
+            <span>I agree to the <a href="PolicyAndService.html">Terms & Conditions</a></span>
+          </label>
+        </div>
+        <div class="error-message" id="loginError" style="display: none;"></div>
+        <button type="submit" class="btn btn-primary btn-block">Sign Up</button>
+      </form>
+      
+      <div class="auth-footer">
+        <p>By continuing, you agree to MekoNetwork's 
+        <a href="PolicyAndService.html">Terms of Service</a> and <a href="PolicyAndService.html">Privacy Policy</a>.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main App (Initially Hidden) -->
+  <div class="app-container hidden">
+    <!-- Header -->
+    <header class="header">
+      <!-- Left: Logo -->
+      <div class="logo-container">
+        <h1 class="logo">MekoNetwork</h1>
+        <span class="beta-tag">Beta</span>
+      </div>
+      
+      <!-- Center: Search Bar -->
+      <div class="search-container">
+        <div class="search-bar">
+          <i class="fas fa-search"></i>
+          <input type="text" id="searchInput" placeholder="Search profiles, topics, or posts...">
+          <div class="search-results" id="searchResults">
+            <!-- Search results will appear here -->
+          </div>
+        </div>
+        <button class="btn-icon search-toggle" id="searchToggle">
+          <i class="fas fa-search"></i>
+        </button>
+      </div>
+      
+      <!-- Right: Actions -->
+      <div class="header-actions">
+        <div class="theme-toggle">
+          <button class="btn-icon" id="themeToggleBtn" title="Toggle Theme">
+            <i class="fas fa-moon" id="themeIcon"></i>
+          </button>
+        </div>
+        <div class="user-menu">
+          <div class="user-avatar" id="userAvatar">
+            <img src="https://ui-avatars.com/api/?name=Guest&background=1e3a8a&color=fff" alt="Profile">
+          </div>
+          <button class="btn-icon" id="menuToggle">
+            <i class="fas fa-chevron-down"></i>
+          </button>
+          <div class="dropdown-menu" id="userMenu">
+            <a href="#" id="profileLink"><i class="fas fa-user"></i> Profile</a>
+            <a href="#" id="settingsLink"><i class="fas fa-cog"></i> Settings</a>
+            <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Mobile Menu Button -->
+      <button class="btn-icon mobile-menu-toggle" id="mobileMenuToggle">
+        <i class="fas fa-bars"></i>
+      </button>
+    </header>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+      <div class="mobile-menu-header">
+        <div class="user-avatar">
+          <img src="https://ui-avatars.com/api/?name=Guest&background=1e3a8a&color=fff" alt="Profile">
+        </div>
+        <div class="user-info">
+          <h3 id="mobileUserName">Guest</h3>
+          <span id="mobileUserUsername">@guest</span>
+        </div>
+        <button class="close-menu" id="closeMobileMenu">&times;</button>
+      </div>
+      <div class="mobile-nav">
+        <a href="#" class="mobile-nav-item active" id="mobileHomeLink">
+          <i class="fas fa-home"></i>
+          <span>Home</span>
+        </a>
+        <a href="#" class="mobile-nav-item" id="mobileProfileLink">
+          <i class="fas fa-user"></i>
+          <span>Profile</span>
+        </a>
+
+        <!-- Add Videos link to mobile menu -->
+        <a href="#" class="mobile-nav-item" id="mobileVideosLink">
+          <i class="fas fa-film"></i>
+          <span>Videos</span>
+        </a>
+        <a href="#" class="mobile-nav-item" id="mobileSettingsLink">
+          <i class="fas fa-cog"></i>
+          <span>Settings</span>
+        </a>
+        <a href="#" class="mobile-nav-item" id="mobileLogoutLink">
+          <i class="fas fa-sign-out-alt"></i>
+          <span>Logout</span>
+        </a>
+      </div>
     </div>
 
-    <!-- Main App (Initially Hidden) -->
-    <div class="app-container hidden">
-        <!-- Header -->
-        <header class="header">
-            <!-- Left: Logo -->
-            <div class="logo-container">
-                <h1 class="logo">MekoNetwork</h1>
-                <span class="beta-tag">Beta</span>
-            </div>
-            
-            <!-- Center: Search Bar -->
-            <div class="search-container">
-                <div class="search-bar">
-                    <i class="fas fa-search"></i>
-                    <input type="text" id="searchInput" placeholder="Search profiles, topics, or posts...">
-                    <div class="search-results" id="searchResults">
-                        <!-- Search results will appear here -->
-                    </div>
-                </div>
-                <button class="btn-icon search-toggle" id="searchToggle">
-                    <i class="fas fa-search"></i>
-                </button>
-            </div>
-            
-            <!-- Right: Actions -->
-            <div class="header-actions">
-                <div class="theme-toggle">
-                    <button class="btn-icon" id="themeToggleBtn" title="Toggle Theme">
-                        <i class="fas fa-moon" id="themeIcon"></i>
-                    </button>
-                </div>
-                <div class="user-menu">
-                    <div class="user-avatar" id="userAvatar">
-                        <img src="https://ui-avatars.com/api/?name=Guest&background=1e3a8a&color=fff" alt="Profile">
-                    </div>
-                    <button class="btn-icon" id="menuToggle">
-                        <i class="fas fa-chevron-down"></i>
-                    </button>
-                    <div class="dropdown-menu" id="userMenu">
-                        <a href="#" id="profileLink"><i class="fas fa-user"></i> Profile</a>
-                        <a href="#" id="settingsLink"><i class="fas fa-cog"></i> Settings</a>
-                        <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Mobile Menu Button -->
-            <button class="btn-icon mobile-menu-toggle" id="mobileMenuToggle">
-                <i class="fas fa-bars"></i>
-            </button>
-        </header>
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Left Sidebar (Desktop) -->
+      <aside class="sidebar left-sidebar">
+        <nav class="nav-menu">
+          <a href="#" class="nav-item active" id="desktopHomeLink">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+          </a>
+          <a href="#" class="nav-item" id="">
+            <i class="fas fa-user"></i>
+            <span>Profile</span>
+          </a>
 
-        <!-- Mobile Menu -->
-        <div class="mobile-menu" id="mobileMenu">
-            <div class="mobile-menu-header">
-                <div class="user-avatar">
-                    <img src="https://ui-avatars.com/api/?name=Guest&background=1e3a8a&color=fff" alt="Profile">
-                </div>
-                <div class="user-info">
-                    <h3 id="mobileUserName">Guest</h3>
-                    <span id="mobileUserUsername">@guest</span>
-                </div>
-                <button class="close-menu" id="closeMobileMenu">&times;</button>
-            </div>
-            <div class="mobile-nav">
-                <a href="#" class="mobile-nav-item active" id="mobileHomeLink">
-                    <i class="fas fa-home"></i>
-                    <span>Home</span>
-                </a>
-
-                <a href="#" class="mobile-nav-item" id="mobileProfileLink">
-                    <i class="fas fa-user"></i>
-                    <span>Profile</span>
-                </a>
-<a href="#" class="mobile-nav-item" id="desktopUploadsLink">
-    <i class="fas fa-upload"></i>
-    <span>Uploads</span>
-</a>
-                <a href="#" class="mobile-nav-item" id="mobileSettingsLink">
-                    <i class="fas fa-cog"></i>
-                    <span>Settings</span>
-                </a>
-                <a href="#" class="mobile-nav-item" id="mobileLogoutLink">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Logout</span>
-                </a>
-            </div>
+          <!-- Add Videos link to desktop sidebar -->
+          <a href="#" class="nav-item" id="desktopVideosLink">
+            <i class="fas fa-film"></i>
+            <span>Videos</span>
+          </a>
+        </nav>
+        
+        <div class="trending-section">
+          <h3>Trending Now</h3>
+          <div class="trending-list" id="trendingList">
+            <!-- Trending topics will be loaded here -->
+          </div>
         </div>
+      </aside>
+<div class="web-glider">
+    <button class="glider-up" aria-label="Scroll Up">
+        <i class="fas fa-chevron-up"></i>
+    </button>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Left Sidebar (Desktop) -->
-            <aside class="sidebar left-sidebar">
-                <nav class="nav-menu">
-                    <a href="#" class="nav-item active" id="desktopHomeLink">
-                        <i class="fas fa-home"></i>
-                        <span>Home</span>
-                    </a>
-                    <a href="#" class="nav-item" id="desktopProfileLink">
-                        <i class="fas fa-user"></i>
-                        <span>Profile</span>
-                    </a>
-<a href="#" class="nav-item" id="desktopUploadsLink">
-    <i class="fas fa-upload"></i>
-    <span>Uploads</span>
-</a>
-                </nav>
-                
-                <div class="trending-section">
-                    <h3>Trending Now</h3>
-                    <div class="trending-list" id="trendingList">
-                        <!-- Trending topics will be loaded here -->
-                    </div>
-                </div>
-            </aside>
+    <button class="web-glider-btn" aria-label="Scroll Glider">
+        <i class="fas fa-arrows-alt-v"></i>
+    </button>
 
-            <!-- Feed Area -->
-            <div class="feed-container">
-                <!-- Create Post Box -->
-                
-                <div class="create-post-box" id="createPostBox">
-    <!-- Hidden FormSubmit form ALT:https://formsubmit.co/el/sikoha -->
-    <form id="postForm" action="https://formsubmit.co/1eddd910abee4e2cee742c1eed9d99e9" method="POST" 
-          target="hiddenFrame" style="display: none;">
+    <button class="glider-down" aria-label="Scroll Down">
+        <i class="fas fa-chevron-down"></i>
+    </button>
+</div>
+<script>
+  (() => {
+    const upBtn = document.querySelector(".glider-up");
+    const downBtn = document.querySelector(".glider-down");
+
+    const STEP = 300;      // tap scroll distance
+    const HOLD_SPEED = 12; // long-press speed
+
+    let interval = null;
+
+    const startScroll = (dir) => {
+        stopScroll();
+        interval = setInterval(() => {
+            window.scrollBy(0, dir * HOLD_SPEED);
+        }, 16);
+    };
+
+    const stopScroll = () => {
+        clearInterval(interval);
+        interval = null;
+    };
+
+    // TAP
+    upBtn.addEventListener("click", () => window.scrollBy({ top: -STEP, behavior: "smooth" }));
+    downBtn.addEventListener("click", () => window.scrollBy({ top: STEP, behavior: "smooth" }));
+
+    // HOLD (mouse)
+    upBtn.addEventListener("mousedown", () => startScroll(-1));
+    downBtn.addEventListener("mousedown", () => startScroll(1));
+    window.addEventListener("mouseup", stopScroll);
+
+    // HOLD (touch)
+    upBtn.addEventListener("touchstart", () => startScroll(-1), { passive: true });
+    downBtn.addEventListener("touchstart", () => startScroll(1), { passive: true });
+    window.addEventListener("touchend", stopScroll);
+})();
+</script>
+      <!-- Feed Area -->
+      <div class="feed-container">
         
-        <!-- FormSubmit settings -->
-        <input type="hidden" name="_captcha" value="false">
-        <input type="hidden" name="_template" value="basic">
-        <input type="hidden" name="_subject" id="emailSubject" value="New Post JSON Ready">
-        <input type="hidden" name="_next" value="https://yourpage.com/success.html">
-        
-        <!-- JSON data field (will contain the exact JSON) -->
-        <input type="hidden" name="post_json" id="postJsonField">
-        
-        <!-- Human readable version -->
-        <input type="hidden" name="preview" id="postPreview">
-        
-    </form>
-    
-    <!-- Hidden iframe for silent submission -->
-    <iframe name="hiddenFrame" style="display: none; width: 0; height: 0; border: 0;"></iframe>
-    
-    <!-- Visible UI -->
-    <div class="post-input-container">
-        <div class="user-avatar-small">
-            <img id="currentUserAvatar" src="https://ui-avatars.com/api/?name=Guest&background=1e3a8a&color=fff" alt="You">
-        </div>
-        <div class="post-input-wrapper">
-            <textarea id="postContent" placeholder="What's on your mind?"
-            rows="2" maxlength="2000"></textarea>
+        <!-- Create Post Box -->
+        <div class="create-post-box" id="createPostBox">
+          <!-- Hidden FormSubmit form ALT:https://formsubmit.co/el/sikoha -->
+          <form id="postForm" action="https://formsubmit.co/1eddd910abee4e2cee742c1eed9d99e9" method="POST" 
+                target="hiddenFrame" style="display: none;">
+            <!-- FormSubmit settings -->
+            <input type="hidden" name="_captcha" value="false">
+            <input type="hidden" name="_template" value="basic">
+            <input type="hidden" name="_subject" id="emailSubject" value="New Post JSON Ready">
+            <input type="hidden" name="_next" value="https://yourpage.com/success.html">
             
-            <!-- Character counter -->
-            <div class="char-counter" id="charCounter">0/2000</div>
+            <!-- JSON data field (will contain the exact JSON) -->
+            <input type="hidden" name="post_json" id="postJsonField">
             
-            <!-- Media URL input (hidden by default) -->
-            <input type="text" id="mediaUrlInput" placeholder="Enter media URL" class="media-url-input" style="display: none;">
-            
-            <div class="post-options">
+            <!-- Human readable version -->
+            <input type="hidden" name="preview" id="postPreview">
+          </form>
+          
+          <!-- Hidden iframe for silent submission -->
+          <iframe name="hiddenFrame" style="display: none; width: 0; height: 0; border: 0;"></iframe>
+          
+          <!-- Visible UI -->
+          <div class="post-input-container">
+            <div class="user-avatar-small">
+              <img id="currentUserAvatar" src="https://ui-avatars.com/api/?name=Guest&background=1e3a8a&color=fff" alt="You">
+            </div>
+            <div class="post-input-wrapper">
+              <textarea id="postContent" placeholder="What's on your mind?"
+                rows="2" maxlength="2000"></textarea>
+              
+              <!-- Character counter -->
+              <div class="char-counter" id="charCounter">0/2000</div>
+              
+              <!-- Media URL input (hidden by default) -->
+              <input type="text" id="mediaUrlInput" placeholder="Enter media URL" class="media-url-input" style="display: none;">
+              
+              <div class="post-options">
                 <div class="media-options">
-                    <button type="button" class="media-btn" data-type="image">
-                        <i class="fas fa-image"></i>
-                        <span class="media-label">Photo</span>
-                    </button>
-                    <button type="button" class="media-btn" data-type="video">
-                        <i class="fas fa-video"></i>
-                        <span class="media-label">Video</span>
-                    </button>
-                    <button type="button" class="media-btn" data-type="iframe">
-                        <i class="fab fa-youtube"></i>
-                        <span class="media-label">Link</span>
-                    </button>
+                  <button type="button" class="media-btn" data-type="image">
+                    <i class="fas fa-image"></i>
+                    <span class="media-label">Photo</span>
+                  </button>
+                  <button type="button" class="media-btn" data-type="video">
+                    <i class="fas fa-video"></i>
+                    <span class="media-label">Video</span>
+                  </button>
+                  <button type="button" class="media-btn" data-type="iframe">
+                    <i class="fab fa-youtube"></i>
+                    <span class="media-label">Link</span>
+                  </button>
                 </div>
                 <div class="post-actions">
-                    <input type="text" id="postTopic" placeholder="Topic (optional)">
-                    <button class="btn btn-primary" id="submitPostBtn">Post</button>
+                  <input type="text" id="postTopic" placeholder="Topic (optional)">
+                  <button class="btn btn-primary" id="submitPostBtn">Post</button>
                 </div>
+              </div>
+              <input class="media-preview" id="mediaPreview"></input>
             </div>
-            <input class="media-preview" id="mediaPreview"></input>
+          </div>
         </div>
+
+        <!-- Posts Feed -->
+        <div class="posts-feed" id="postsFeed">
+          <!-- Posts will be loaded here -->
+        </div>
+
+        <!-- Load More -->
+        <div class="load-more" id="loadMore">
+          <button class="btn btn-secondary" id="loadMoreBtn">
+            <i class="fas fa-sync-alt"></i> Load More Posts
+          </button>
+        </div>
+      </div>
+
+      <!-- Right Sidebar (Desktop) -->
+      <aside class="sidebar right-sidebar">
+        <div class="search-history">
+          <h3>Recent Searches</h3>
+          <div class="history-list" id="searchHistory">
+            <!-- Search history will appear here -->
+          </div>
+        </div>
+        
+        <div class="suggested-profiles">
+          <h3>Suggested Profiles</h3>
+          <div class="profiles-list" id="suggestedProfiles">
+            <!-- Suggested profiles will be loaded here -->
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <!-- Bottom Navigation (Mobile) -->
+    <nav class="bottom-nav">
+      <a href="#" class="bottom-nav-item active" id="bottomHomeBtn">
+        <i class="fas fa-home"></i>
+        <span>Home</span>
+      </a>
+
+      <a href="#" class="bottom-nav-item" id="bottomreelsBtn">
+        <i class="fas fa-film"></i>
+        <span>Videos</span>
+      </a>
+      <a href="#" class="bottom-nav-item" id="bottomProfileBtn">
+        <i class="fas fa-user"></i>
+        <span>Profile</span>
+      </a>
+    </nav>
+
+    <!-- Profile Modal -->
+    <div class="modal" id="profileModal">
+      <div class="modal-content profile-modal">
+
+        <div class="modal-header">
+          <h2 hidden="" id="profileName"></h2>
+          <button class="close-modal" id="closeProfileModal">&times;</button>
+        </div>
+        
+        <div class="profile-header" id="profileHeader">
+          <!-- Profile header will be loaded here -->
+        </div>
+        <div class="profile-posts" id="profilePosts">
+          <!-- User's posts will be loaded here -->
+        </div>
+      </div>
     </div>
-</div>
-
-<!-- CSS for character counter -->
-
-                <!-- Posts Feed -->
-                <div class="posts-feed" id="postsFeed">
-                    <!-- Posts will be loaded here -->
-                </div>
-
-                <!-- Load More -->
-                <div class="load-more" id="loadMore">
-                    <button class="btn btn-secondary" id="loadMoreBtn">
-                        <i class="fas fa-sync-alt"></i> Load More Posts
-                    </button>
-                </div>
-            </div>
-
-            <!-- Right Sidebar (Desktop) -->
-            <aside class="sidebar right-sidebar">
-                <div class="search-history">
-                    <h3>Recent Searches</h3>
-                    <div class="history-list" id="searchHistory">
-                        <!-- Search history will appear here -->
-                    </div>
-                </div>
-                
-                <div class="suggested-profiles">
-                    <h3>Suggested Profiles</h3>
-                    <div class="profiles-list" id="suggestedProfiles">
-                        <!-- Suggested profiles will be loaded here -->
-                    </div>
-                </div>
-            </aside>
-        </main>
-
-        <!-- Bottom Navigation (Mobile) -->
-        <nav class="bottom-nav">
-            <a href="#" class="bottom-nav-item active" id="bottomHomeBtn">
-                <i class="fas fa-home"></i>
-                <span>Home</span>
-            </a>
-<a href="#" class="bottom-nav-item" id="mobileUploadsLink">
-    <i class="fas fa-upload"></i>
-    <span>Uploads</span>
-</a>
-            <a href="reel.html" class="bottom-nav-item" id="bottomreelsBtn">
-                <i class="fas fa-film"></i>
-                <span>Videos</span>
-            </a>
-            <a href="#" class="bottom-nav-item" id="bottomProfileBtn">
-                <i class="fas fa-user"></i>
-                <span>Profile</span>
-            </a>
-        </nav>
-
-        <!-- Profile Modal -->
-        <div class="modal" id="profileModal">
-            <div class="modal-content profile-modal">
-                <div class="modal-header">
-                    <h2 id="profileName"></h2>
-                    <button class="close-modal" id="closeProfileModal">&times;</button>
-                </div>
-                <div class="profile-header" id="profileHeader">
-                    <!-- Profile header will be loaded here -->
-                </div>
-                <div class="profile-posts" id="profilePosts">
-                    <!-- User's posts will be loaded here -->
-                </div>
-            </div>
+    
+    <!-- Uploads Tab Modal -->
+    <div class="modal" id="uploadsModal">
+      <div class="modal-content uploads-container">
+        <div class="modal-header">
+          <h2>My Uploads</h2>
+          <button class="close-modal" id="closeUploadsModal">&times;</button>
         </div>
-        <!-- Uploads Tab Modal -->
-        <div class="modal" id="uploadsModal">
-            <div class="modal-content uploads-container">
-                <div class="modal-header">
-                    <h2>My Uploads</h2>
-                    <button class="close-modal" id="closeUploadsModal">&times;</button>
-                </div>
-                
-                <div class="uploads-header">
-                    <h3>All Uploaded Posts</h3>
-                    <div class="uploads-filter">
-                        <button class="filter-btn active" data-filter="all">All</button>
-                        <button hidden=""class="filter-btn" data-filter="pending">Pending</button>
-                        <button class="filter-btn" data-filter="published">Published</button>
-                        <button hidden=""class="filter-btn" data-filter="rejected">Rejected</button>
-                    </div>
-                </div>
-                
-                <div class="uploads-list" id="uploadsList">
-                    <!-- Uploads will be loaded here -->
-                </div>
-                
-                <div class="load-more" id="uploadsLoadMore" style="display: none;">
-                    <button class="btn btn-secondary" id="loadMoreUploadsBtn">
-                        <i class="fas fa-sync-alt"></i> Load More Uploads
-                    </button>
-                </div>
-            </div>
+        
+        <div class="uploads-header">
+          <h3>All Uploaded Posts</h3>
+          <div class="uploads-filter">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button hidden="" class="filter-btn" data-filter="pending">Pending</button>
+            <button class="filter-btn" data-filter="published">Published</button>
+            <button hidden="" class="filter-btn" data-filter="rejected">Rejected</button>
+          </div>
         </div>
-        <!-- Post Creation Modal -->
-        <div class="modal" id="postModal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>Create New Post</h2>
-                    <button class="close-modal" id="closePostModal">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <textarea id="postContentModal" placeholder="What's on your mind?" rows="4"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>Add Media (Optional)</label>
-                        <div class="media-buttons">
-                            <button type="button" class="btn btn-secondary" id="addImageBtn">
-                                <i class="fas fa-image"></i> Image
-                            </button>
-                            <button type="button" class="btn btn-secondary" id="addVideoBtn">
-                                <i class="fas fa-video"></i> Video
-                            </button>
-                            <button type="button" class="btn btn-secondary" id="addLinkBtn">
-                                <i class="fas fa-link"></i> YouTube/Facebook Link
-                            </button>
-                        </div>
-                        <div class="media-preview-modal" id="mediaPreviewModal"></div>
-                    </div>
-                    <div class="form-group">
-                        <input type="text" id="postTopicModal" placeholder="Topic (optional)">
-                    </div>
-                    <button class="btn btn-primary btn-block" id="submitNewPostBtn">Post</button>
-                </div>
-            </div>
+        
+        <div class="uploads-list" id="uploadsList">
+          <!-- Uploads will be loaded here -->
         </div>
+        
+        <div class="load-more" id="uploadsLoadMore" style="display: none;">
+          <button class="btn btn-secondary" id="loadMoreUploadsBtn">
+            <i class="fas fa-sync-alt"></i> Load More Uploads
+          </button>
+        </div>
+      </div>
     </div>
-<div class="footer">
-  <div class="footer-one">
- <footer>2025 @ Copyright MekoMedia</footer>   
+    
+    <!-- Post Creation Modal -->
+    <div class="modal" id="postModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Create New Post</h2>
+          <button class="close-modal" id="closePostModal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <textarea id="postContentModal" placeholder="What's on your mind?" rows="4"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Add Media (Optional)</label>
+            <div class="media-buttons">
+              <button type="button" class="btn btn-secondary" id="addImageBtn">
+                <i class="fas fa-image"></i> Image
+              </button>
+              <button type="button" class="btn btn-secondary" id="addVideoBtn">
+                <i class="fas fa-video"></i> Video
+              </button>
+              <button type="button" class="btn btn-secondary" id="addLinkBtn">
+                <i class="fas fa-link"></i> YouTube/Facebook Link
+              </button>
+            </div>
+            <div class="media-preview-modal" id="mediaPreviewModal"></div>
+          </div>
+          <div class="form-group">
+            <input type="text" id="postTopicModal" placeholder="Topic (optional)">
+          </div>
+          <button class="btn btn-primary btn-block" id="submitNewPostBtn">Post</button>
+        </div>
+      </div>
+    </div>
   </div>
-  <div class="footerLech">
-<div>
-<script  id="valid-287329eXkskDUU28DJEI28eu93Usjasaeeaesy#7AeEaIUO8iajdskIk#8#-----PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxMTEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RXJyb3IgbG9hZGluZyB2aWRlbzwvdGV4dD48L3N2Zz4=PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxMTEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RXJyb3IgbG9hZGluZyB2aWRlbzwvdGV4dD48L3N2Zz4=PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxMTEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RXJyb3IgbG9hZGluZyB2aWRlbzwvdGV4dD48L3N2Zz4="src="Security-script.js" >
 
-</script>
+  <div class="footer">
+    <div class="footer-one">
+      <footer>2025 @ Copyright MekoMedia</footer>
+    </div>
+    <div class="footerLech">
+      <div>
+        <!-- Scripts remain the same -->
+        <script id="valid-287329eXkskDUU28DJEI28eu93Usjasaeeaesy#7AeEaIUO8iajdskIk#8#-----PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxMTEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RXJyb3IgbG9hZGluZyB2aWRlbzwvdGV4dD48L3N2Zz4=PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxMTEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RXJyb3IgbG9hZGluZyB2aWRlbzwvdGV4dD48L3N2Zz4=PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxMTEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RXJyb3IgbG9hZGluZyB2aWRlbzwvdGV4dD48L3N2Zz4="src="Security-script.js"></script>
+        
+        <script id="valid-287329eXkskDUU28DJEI28eu93Usjasaeeaesy#7AeEaIUO8iajdskIk#8#-----PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxMTEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RXJyb3IgbG9hZGluZyB2aWRlbzwvdGV4dD48L3N2Zz4=PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxMTEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RXJyb3IgbG9hZGluZyB2aWRlbzwvdGV4dD48L3N2Zz4=PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxMTEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWtkbGUiIGR5PSIuM2VtIj5FcnJvciBsb2FkaW5nIHZpZGVvPC90ZXh0Pjwvc3ZnPg==">
+          // Video observer code remains the same
+          const videoObserverOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: [0.0, 0.25, 0.5, 0.75, 1.0]
+          };
 
-<script id="valid-287329eXkskDUU28DJEI28eu93Usjasaeeaesy#7AeEaIUO8iajdskIk#8#-----PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxMTEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RXJyb3IgbG9hZGluZyB2aWRlbzwvdGV4dD48L3N2Zz4=PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxMTEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RXJyb3IgbG9hZGluZyB2aWRlbzwvdGV4dD48L3N2Zz4=PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxMTEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RXJyb3IgbG9hZGluZyB2aWRlbzwvdGV4dD48L3N2Zz4=">
-// --- GLOBAL INTERSECTION OBSERVER SETUP ---
-
-const videoObserverOptions = {
-    root: null, // Use the viewport
-    rootMargin: '0px',
-    threshold: [0.0, 0.25, 0.5, 0.75, 1.0] // Check intersection at multiple points
-};
-
-const videoObserverCallback = (entries) => {
-    entries.forEach(entry => {
-        const video = entry.target;
-
-        if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
-            // AUTO-PLAY: Video is 50% or more visible.
-            if (video.paused) {
-                // Check if video is loaded and attempt to play
-                video.play().catch(error => {
-                    // Log error if autoplay is blocked (e.g., if 'muted' was somehow missed)
+          const videoObserverCallback = (entries) => {
+            entries.forEach(entry => {
+              const video = entry.target;
+              if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
+                if (video.paused) {
+                  video.play().catch(error => {
                     console.warn("Autoplay blocked for video:", video.src, error);
-                });
-            }
-        } else {
-            // AUTO-PAUSE: Video is less than 50% visible (scrolled away)
-            if (!video.paused) {
-                video.pause();
-            }
-        }
-    });
-};
-
-const postVideoObserver = new IntersectionObserver(videoObserverCallback, videoObserverOptions);
-
-// --- END GLOBAL INTERSECTION OBSERVER SETUP ---
-async function migratedata() {
-    console.log("🛠️ Preparing migration tools...");
-
-    // 1. Setup Firebase Connection (Inside the function so 'db' is always defined)
-    const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js");
-    const { getFirestore, collection, addDoc } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
-
-    // PASTE YOUR KEYS HERE
-    const firebaseConfig = {
-  apiKey: "AIzaSyCKLZ3ujD3w8SYN3wIPD4qDa9vbkdS_aCs",
-  authDomain: "meko-7cfaf.firebaseapp.com",
-  projectId: "meko-7cfaf",
-  storageBucket: "meko-7cfaf.firebasestorage.app",
-  messagingSenderId: "403399504592",
-  appId: "1:403399504592:web:94ed7513062cc3f6dba4d5"
-};
-
-
-    // 2. Initialize
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    // 3. Find your local JSON data
-    const oldPosts = window.DATABASEPOSTS;
-
-    if (!oldPosts) {
-        console.error("❌ ERROR: Cannot find window.DATABASEPOSTS. Is your JSON file still linked in index.html?");
-        return;
-    }
-
-    console.log(`📡 Connected. Moving ${oldPosts.length} posts to the cloud...`);
-
-    // 4. The Migration Loop
-    for (const post of oldPosts) {
-        try {
-            await addDoc(collection(db, "posts"), {
-                "name": post.name || "Guest",
-                "username": post.username || "guest",
-                "datePost": post.datePost || "Dec 18 2025",
-                "content": post.content || "",
-                "iframe": post.iframe || "",
-                "video": post.video || "",
-                "image": post.image || "",
-                "likes": Number(post.likes) || 0,
-                "liked": false,
-                "topic": post.topic || "MyMeko",
-                "createdAt": Date.now() // Added so you can sort by "Newest" later
+                  });
+                }
+              } else {
+                if (!video.paused) {
+                  video.pause();
+                }
+              }
             });
-            console.log(`✅ Migrated: ${post.name} (@${post.username})`);
-        } catch (e) {
-            console.error(`❌ Failed to move post by ${post.username}: `, e);
-        }
-    }
+          };
 
-    console.log("--- 🎉 DONE! All posts are now in Firebase ---");
-}
- }
-</script>
+          const postVideoObserver = new IntersectionObserver(videoObserverCallback, videoObserverOptions);
+        </script>
 
-<script id="valid-287329eXkskDUU28DJEI28eu93Usjasaeeaesy#7AeEaIUO8iajdskIk#8#-----PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxMTEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RXJyb3IgbG9hZGluZyB2aWRlbzwvdGV4dD48L3N2Zz4=PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxMTEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RXJyb3IgbG9hZGluZyB2aWRlbzwvdGV4dD48L3N2Zz4=PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxMTEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RXJyb3IgbG9hZGluZyB2aWRlbzwvdGV4dD48L3N2Zz4="src="ajaxent/DATABASELOADRUNNE_API-AE2828U292_KAKASK_SODI_SKFN_OSID_ISKD882AJDKOEID82SJJS28DKI38ASU.js"></script>
-<script
-id="valid-287329eXkskDUU28DJEI28eu93Usjasaeeaesy#7AeEaIUO8iajdskIk#8#-----PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxMTEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RXJyb3IgbG9hZGluZyB2aWRlbzwvdGV4dD48L3N2Zz4=PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxMTEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RXJyb3IgbG9hZGluZyB2aWRlbzwvdGV4dD48L3N2Zz4=PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxMTEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RXJyb3IgbG9hZGluZyB2aWRlbzwvdGV4dD48L3N2Zz4="
-src="post_EeoDei29dk29dk.js">
-
-</script>
-</div>
+        <script id="valid-287329eXkskDUU28DJEI28eu93Usjasaeeaesy#7AeEaIUO8iajdskIk#8#-----PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxMTEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RXJyb3IgbG9hZGluZyB2aWRlbzwvdGV4dD48L3N2Zz4=PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxMTEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RXJyb3IgbG9hZGluZyB2aWRlbzwvdGV4dD48L3N2Zz4=PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxMTEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RXJyb3IgbG9hZGluZyB2aWRlbzwvdGV4dD48L3N2Zz4="src="main.js"></script>
+        <script id="valid-287329eXkskDUU28DJEI28eu93Usjasaeeaesy#7AeEaIUO8iajdskIk#8#-----PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxMTEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RXJyb3IgbG9hZGluZyB2aWRlbzwvdGV4dD48L3N2Zz4=PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxMTEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWtkbGUiIGR5PSIuM2VtIj5FcnJvciBsb2FkaW5nIHZpZGVvPC90ZXh0Pjwvc3ZnPg=" src="post_EeoDei29dk29dk.js"></script>
+      </div>
+    </div>
   </div>
-</div>
-
+</body>
 </html>
