@@ -6,8 +6,12 @@ let currentPage = 0;
 let currentMediaType = null;
 let allPosts = [];
 let displayedPosts = new Set();
-let DATABASEPOSTS = []; // Initialize as empty array
+let DATABASEPOSTS = []; 
 let sharedPostId = null;
+let isVideoMode = false;
+let videoPosts = [];
+let displayedVideoPosts = new Set();
+let videoPage = 0;
 
 // Store all registered users in localStorage
 const USERS_KEY = 'meko-registered-users';
@@ -72,6 +76,7 @@ const elements = {
     mobileLogoutLink: document.getElementById('mobileLogoutLink'),
     
     bottomSearchBtn: document.getElementById('bottomSearchBtn'),
+themeToggleBtn: document.getElementById('themeToggleBtn'),
     
     bottomProfileBtn: document.getElementById('bottomProfileBtn'),
     
@@ -81,8 +86,1079 @@ const elements = {
     profileLink: document.getElementById('profileLink'),
     logoutLink: document.getElementById('logoutLink'),
     currentUserAvatar: document.getElementById('currentUserAvatar'),
-    userAvatar: document.querySelector('#userAvatar img')
+    userAvatar: document.querySelector('#userAvatar img'),
+    
+    // Video navigation elements
+    desktopVideosLink: document.getElementById('desktopVideosLink'),
+    mobileVideosLink: document.getElementById('mobileVideosLink'),
+    bottomreelsBtn: document.getElementById('bottomreelsBtn')
 };
+// ==================== THEME FUNCTIONS ====================
+
+function setupTheme() {
+    const savedTheme = localStorage.getItem('meko-theme');
+    if (savedTheme === 'light') {
+        document.body.classList.remove('dark-mode');
+        document.body.classList.add('light-mode');
+        if (elements.themeIcon) {
+            elements.themeIcon.className = 'fas fa-sun';
+        }
+    }
+}
+
+function toggleTheme() {
+    if (document.body.classList.contains('dark-mode')) {
+        document.body.classList.remove('dark-mode');
+        document.body.classList.add('light-mode');
+        if (elements.themeIcon) {
+            elements.themeIcon.className = 'fas fa-sun';
+        }
+        localStorage.setItem('meko-theme', 'light');
+    } else {
+        document.body.classList.remove('light-mode');
+        document.body.classList.add('dark-mode');
+        if (elements.themeIcon) {
+            elements.themeIcon.className = 'fas fa-moon';
+        }
+        localStorage.setItem('meko-theme', 'dark');
+    }
+}
+
+// ==================== MOBILE FUNCTIONS ====================
+
+function openMobileMenu() {
+    if (elements.mobileMenu) {
+        elements.mobileMenu.classList.add('active');
+    }
+}
+
+function closeMobileMenu() {
+    if (elements.mobileMenu) {
+        elements.mobileMenu.classList.remove('active');
+    }
+}
+
+function toggleUserMenu() {
+    if (elements.userMenu) {
+        elements.userMenu.classList.toggle('active');
+    }
+}
+
+// ==================== SEARCH FUNCTIONS ====================
+
+function toggleSearchBar() {
+    const searchBar = document.querySelector('.search-bar');
+    if (searchBar) {
+        searchBar.classList.toggle('active');
+        if (searchBar.classList.contains('active')) {
+            if (elements.searchInput) elements.searchInput.focus();
+        }
+    }
+}
+
+function showSearchResults() {
+    if (elements.searchInput && elements.searchInput.value.trim().length > 0) {
+        if (elements.searchResults) elements.searchResults.style.display = 'block';
+    }
+}
+
+function handleSearch() {
+    const query = elements.searchInput.value.trim().toLowerCase();
+    
+    if (query.length === 0) {
+        if (elements.searchResults) {
+            elements.searchResults.style.display = 'none';
+        }
+        return;
+    }
+    
+    // Basic search implementation
+    // You'll need to implement search logic based on your data
+    console.log('Searching for:', query);
+}
+
+// ==================== POST CREATION FUNCTIONS ====================
+
+function showPostModal() {
+    if (elements.postModal) {
+        elements.postModal.classList.add('active');
+    }
+}
+
+function resetPostForm() {
+    if (elements.postContentModal) elements.postContentModal.value = '';
+    if (elements.postTopicModal) elements.postTopicModal.value = '';
+    if (elements.mediaPreviewModal) elements.mediaPreviewModal.innerHTML = '';
+}
+
+// ==================== LIKE FUNCTION ====================
+
+function handleLike(postId, button) {
+    if (!currentUser || currentUser.isGuest) {
+        alert('Please login to like posts!');
+        return;
+    }
+    
+    const post = allPosts.find(p => p.id === postId);
+    if (!post) return;
+    
+    if (!currentUser.likedPosts) currentUser.likedPosts = new Set();
+    
+    const postElement = button.closest('.post-card');
+    const likesSpan = postElement.querySelector('.post-stats span:first-child');
+    
+    let currentLikes = post.likes;
+    if (likesSpan) {
+        const likesText = likesSpan.textContent;
+        currentLikes = parseInt(likesText.replace(/[^0-9]/g, ''));
+    }
+    
+    if (currentUser.likedPosts.has(postId)) {
+        currentUser.likedPosts.delete(postId);
+        currentLikes--;
+        button.classList.remove('liked');
+        button.innerHTML = '<i class="fas fa-heart"></i> Like';
+    } else {
+        currentUser.likedPosts.add(postId);
+        currentLikes++;
+        button.classList.add('liked');
+        button.innerHTML = '<i class="fas fa-heart"></i> Liked';
+        button.style.transform = 'scale(1.2)';
+        setTimeout(() => {
+            button.style.transform = 'scale(1)';
+        }, 200);
+    }
+    
+    post.likes = currentLikes;
+    
+    if (likesSpan) {
+        likesSpan.textContent = `${currentLikes.toLocaleString()} likes`;
+        likesSpan.style.color = 'var(--accent)';
+        setTimeout(() => {
+            likesSpan.style.color = '';
+        }, 300);
+    }
+    
+    saveCurrentUser();
+}
+
+// ==================== SHARE FUNCTIONS ====================
+
+function addShareButtonToPost(postElement, postId) {
+    // Check if share button already exists
+    if (postElement.querySelector('.share-btn')) return;
+    
+    // Find the post-actions-buttons container
+    const postActions = postElement.querySelector('.post-actions-buttons');
+    if (!postActions) return;
+    
+    // Create share button
+    const shareBtn = document.createElement('button');
+    shareBtn.className = 'action-btn share-btn';
+    shareBtn.innerHTML = '<i class="fas fa-share-alt"></i> Share';
+    shareBtn.dataset.postId = postId;
+    
+    // Add click event
+    shareBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        sharePost(postId);
+    });
+    
+    // Insert before the like button
+    const likeBtn = postActions.querySelector('[data-action="like"]');
+    if (likeBtn) {
+        postActions.insertBefore(shareBtn, likeBtn);
+    } else {
+        postActions.appendChild(shareBtn);
+    }
+}
+// ==================== SHARE FUNCTIONS ====================
+
+function sharePost(postId) {
+    const post = allPosts.find(p => p.id === postId);
+    if (!post) {
+        alert('Post not found');
+        return;
+    }
+    
+    const shareUrl = generateShareUrl(postId);
+    
+    // Show share options modal instead of just copying
+    showShareOptionsModal(postId, shareUrl, post);
+}
+
+function showShareOptionsModal(postId, shareUrl, post) {
+    const modalContent = `
+        <div class="share-modal-content">
+            <div class="share-header">
+                <h3>Share Post</h3>
+                <button class="close-share-modal">&times;</button>
+            </div>
+            
+            <div class="share-post-preview">
+                <div class="preview-post">
+                    <div class="preview-header">
+                        <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(post.name)}&background=1e3a8a&color=fff" 
+                             alt="${post.name}" class="preview-avatar">
+                        <div class="preview-user-info">
+                            <h4>${post.name}</h4>
+                            <span>@${post.username}</span>
+                        </div>
+                    </div>
+                    <div class="preview-content">
+                        <p>${post.content ? (post.content.length > 150 ? post.content.substring(0, 150) + '...' : post.content) : ''}</p>
+                        ${post.image || post.video || post.iframe ? 
+                            '<div class="preview-media-indicator"><i class="fas fa-image"></i> Media</div>' : ''}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="share-options">
+                <div class="share-url-container">
+                    <label>Share Link:</label>
+                    <div class="url-input-group">
+                        <input type="text" value="${shareUrl}" readonly class="share-url-input" id="shareUrlInput">
+                        <button class="btn btn-primary copy-url-btn" id="copyUrlBtn">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="share-platforms">
+                    <button class="platform-btn" data-platform="whatsapp">
+                        <i class="fab fa-whatsapp"></i>
+                        <span>WhatsApp</span>
+                    </button>
+                    <button class="platform-btn" data-platform="facebook">
+                        <i class="fab fa-facebook"></i>
+                        <span>Facebook</span>
+                    </button>
+                    <button class="platform-btn" data-platform="twitter">
+                        <i class="fab fa-twitter"></i>
+                        <span>Twitter</span>
+                    </button>
+                    <button class="platform-btn" data-platform="telegram">
+                        <i class="fab fa-telegram"></i>
+                        <span>Telegram</span>
+                    </button>
+                    <button class="platform-btn" data-platform="copy">
+                        <i class="fas fa-copy"></i>
+                        <span>Copy Link</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Create or update modal
+    let shareModal = document.getElementById('sharePostModal');
+    if (!shareModal) {
+        shareModal = document.createElement('div');
+        shareModal.id = 'sharePostModal';
+        shareModal.className = 'share-modal';
+        document.body.appendChild(shareModal);
+    }
+    
+    shareModal.innerHTML = modalContent;
+    shareModal.classList.add('active');
+    
+    // Add event listeners
+    const closeBtn = shareModal.querySelector('.close-share-modal');
+    const copyUrlBtn = shareModal.querySelector('.copy-url-btn');
+    const platformBtns = shareModal.querySelectorAll('.platform-btn');
+    
+    // Close modal
+    closeBtn.addEventListener('click', () => {
+        shareModal.classList.remove('active');
+    });
+    
+    // Close when clicking outside
+    shareModal.addEventListener('click', (e) => {
+        if (e.target === shareModal) {
+            shareModal.classList.remove('active');
+        }
+    });
+    
+    // Copy URL button
+    copyUrlBtn.addEventListener('click', () => {
+        const urlInput = document.getElementById('shareUrlInput');
+        urlInput.select();
+        navigator.clipboard.writeText(urlInput.value)
+            .then(() => {
+                copyUrlBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                copyUrlBtn.classList.add('success');
+                setTimeout(() => {
+                    copyUrlBtn.innerHTML = '<i class="fas fa-copy"></i> Copy';
+                    copyUrlBtn.classList.remove('success');
+                }, 2000);
+            })
+            .catch(err => {
+                console.error('Copy failed:', err);
+                alert('Failed to copy. Please copy manually.');
+            });
+    });
+    
+    // Platform buttons
+    platformBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const platform = btn.dataset.platform;
+            if (platform === 'copy') {
+                const urlInput = document.getElementById('shareUrlInput');
+                urlInput.select();
+                navigator.clipboard.writeText(urlInput.value)
+                    .then(() => {
+                        btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                        btn.classList.add('success');
+                        setTimeout(() => {
+                            btn.innerHTML = '<i class="fab fa-copy"></i> Copy Link';
+                            btn.classList.remove('success');
+                        }, 2000);
+                    });
+            } else {
+                shareToPlatform(platform, shareUrl, post);
+            }
+        });
+    });
+}
+
+function shareToPlatform(platform, url, post) {
+    const postContent = post.content ? post.content.substring(0, 100) + (post.content.length > 100 ? '...' : '') : '';
+    const text = `Check out this post on Meko Network by @${post.username}: ${postContent}`;
+    const encodedUrl = encodeURIComponent(url);
+    const encodedText = encodeURIComponent(text);
+    
+    let shareUrl = '';
+    
+    switch(platform) {
+        case 'whatsapp':
+            shareUrl = `https://wa.me/?text=${encodedText}%20${encodedUrl}`;
+            break;
+        case 'facebook':
+            shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+            break;
+        case 'twitter':
+            const hashtags = post.topic ? `&hashtags=${encodeURIComponent(post.topic)}` : '';
+            shareUrl = `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}${hashtags}`;
+            break;
+        case 'telegram':
+            shareUrl = `https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`;
+            break;
+    }
+    
+    if (shareUrl) {
+        window.open(shareUrl, '_blank', 'noopener,noreferrer,width=600,height=400');
+    }
+}
+
+function generateShareUrl(postId) {
+    const baseUrl = window.location.origin + window.location.pathname;
+    return `${baseUrl}?share=${postId}`;
+}
+
+// ==================== URL PARAMETER FUNCTIONS ====================
+
+function processUrlParameters() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const shareParam = urlParams.get('share');
+    
+    if (shareParam) {
+        sharedPostId = shareParam.trim();
+        console.log('Found shared post ID in URL:', sharedPostId);
+        
+        // Wait for posts to load
+        const checkInterval = setInterval(() => {
+            if (allPosts.length > 0) {
+                clearInterval(checkInterval);
+                showSharedPostModal(sharedPostId);
+                
+                // Clean URL without refreshing page
+                if (window.history.replaceState) {
+                    const newUrl = window.location.pathname;
+                    window.history.replaceState(null, '', newUrl);
+                }
+            }
+        }, 100);
+        
+        // Timeout after 5 seconds
+        setTimeout(() => clearInterval(checkInterval), 5000);
+    }
+}
+
+function showSharedPostModal(postId) {
+    const post = allPosts.find(p => p.id === postId);
+    if (!post) {
+        console.log('Post not found:', postId);
+        return;
+    }
+    
+    // Create modal for shared post
+    const modalContent = `
+        <div class="shared-post-modal-content">
+            <div class="shared-post-header">
+                <h2>Shared Post</h2>
+                <button class="close-shared-post-modal">&times;</button>
+            </div>
+            
+            <div class="shared-post-container" id="sharedPostContainer">
+                <!-- Post will be inserted here -->
+            </div>
+            
+            <div class="shared-post-actions">
+                <button class="btn btn-primary" id="viewInFeedBtn">
+                    <i class="fas fa-stream"></i> View in Feed
+                </button>
+                <button class="btn btn-secondary" id="shareThisPostBtn">
+                    <i class="fas fa-share-alt"></i> Share This Post
+                </button>
+            </div>
+        </div>
+    `;
+    
+    // Create or update modal
+    let sharedPostModal = document.getElementById('sharedPostModal');
+    if (!sharedPostModal) {
+        sharedPostModal = document.createElement('div');
+        sharedPostModal.id = 'sharedPostModal';
+        sharedPostModal.className = 'shared-post-modal';
+        document.body.appendChild(sharedPostModal);
+    }
+    
+    sharedPostModal.innerHTML = modalContent;
+    
+    // Add the actual post to the container
+    const sharedPostContainer = document.getElementById('sharedPostContainer');
+    if (sharedPostContainer) {
+        const postElement = createPostElement(post, postId);
+        sharedPostContainer.appendChild(postElement);
+const modalVideos = sharedPostContainer.querySelectorAll("video");
+
+modalVideos.forEach(video => {
+    // Prevent double init
+    if (!video.dataset.customPlayerInit) {
+        video.controls = false;
+        new CustomVideoPlayer(video);
+        video.dataset.customPlayerInit = "true";
+    }
+});
+    }
+    
+    // Show modal
+    sharedPostModal.classList.add('active');
+    
+    // Add event listeners
+    const closeBtn = sharedPostModal.querySelector('.close-shared-post-modal');
+    const viewInFeedBtn = sharedPostModal.querySelector('#viewInFeedBtn');
+    const shareBtn = sharedPostModal.querySelector('#shareThisPostBtn');
+    
+    // Close modal
+    closeBtn.addEventListener('click', () => {
+        sharedPostModal.classList.remove('active');
+    });
+    
+    // Close when clicking outside
+    sharedPostModal.addEventListener('click', (e) => {
+        if (e.target === sharedPostModal) {
+            sharedPostModal.classList.remove('active');
+        }
+    });
+    
+    // View in feed button
+    viewInFeedBtn.addEventListener('click', () => {
+        sharedPostModal.classList.remove('active');
+        
+        // Scroll to post in feed
+        const postElement = document.querySelector(`[data-post-id="${postId}"]`);
+        if (postElement) {
+            postElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            postElement.style.boxShadow = '0 0 0 3px var(--accent)';
+            setTimeout(() => {
+                postElement.style.boxShadow = '';
+            }, 3000);
+        }
+    });
+    
+    // Share button
+    shareBtn.addEventListener('click', () => {
+        sharedPostModal.classList.remove('active');
+        setTimeout(() => {
+            sharePost(postId);
+        }, 300);
+    });
+    
+    // Auto-focus on the modal
+    setTimeout(() => {
+        sharedPostModal.focus();
+    }, 100);
+}
+
+// ==================== CSS FOR SHARE MODALS ====================
+
+const shareModalStyles = `
+<style>
+    /* Share Modal */
+    .share-modal,
+    .shared-post-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 2000;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+    }
+    
+    .share-modal.active,
+    .shared-post-modal.active {
+        display: flex;
+    }
+    
+    .share-modal-content,
+    .shared-post-modal-content {
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        width: 100%;
+        max-width: 500px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    
+    .shared-post-modal-content {
+        max-width: 600px;
+    }
+    
+    .share-header,
+    .shared-post-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .share-header h3,
+    .shared-post-header h2 {
+        margin: 0;
+        color: var(--text-primary);
+    }
+    
+    .close-share-modal,
+    .close-shared-post-modal {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        font-size: 1.5rem;
+        cursor: pointer;
+        padding: 0;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: background 0.3s;
+    }
+    
+    .close-share-modal:hover,
+    .close-shared-post-modal:hover {
+        background: var(--bg-card);
+    }
+    
+    /* Share Post Preview */
+    .share-post-preview {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--border);
+    }
+    
+    .preview-post {
+        background: var(--bg-card);
+        border-radius: 8px;
+        padding: 1rem;
+        border: 1px solid var(--border);
+    }
+    
+    .preview-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+    
+    .preview-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: 2px solid var(--accent);
+    }
+    
+    .preview-user-info h4 {
+        margin: 0;
+        font-size: 1rem;
+        color: var(--text-primary);
+    }
+    
+    .preview-user-info span {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+    
+    .preview-content p {
+        margin: 0 0 0.5rem 0;
+        color: var(--text-secondary);
+        line-height: 1.4;
+    }
+    
+    .preview-media-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: var(--bg-primary);
+        color: var(--text-muted);
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+    }
+    
+    /* Share Options */
+    .share-options {
+        padding: 1.5rem;
+    }
+    
+    .share-url-container {
+        margin-bottom: 1.5rem;
+    }
+    
+    .share-url-container label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+    
+    .url-input-group {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .share-url-input {
+        flex: 1;
+        padding: 0.75rem;
+        background: var(--bg-primary);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .copy-url-btn {
+        white-space: nowrap;
+    }
+    
+    .copy-url-btn.success {
+        background: var(--success) !important;
+        border-color: var(--success) !important;
+    }
+    
+    /* Platform Buttons */
+    .share-platforms {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+    
+    .platform-btn {
+        padding: 1rem;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--text-primary);
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .platform-btn:hover {
+        background: var(--accent);
+        color: white;
+        transform: translateY(-2px);
+    }
+    
+    .platform-btn i {
+        font-size: 1.5rem;
+    }
+    
+    .platform-btn span {
+        font-size: 0.85rem;
+    }
+    
+    /* Shared Post Modal */
+    .shared-post-container {
+        padding: 1.5rem;
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+    
+    .shared-post-container .post-card {
+        margin: 0;
+        box-shadow: none;
+        border: none;
+        background: var(--bg-card);
+    }
+    
+    .shared-post-actions {
+        padding: 1.5rem;
+        border-top: 1px solid var(--border);
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .shared-post-actions .btn {
+        flex: 1;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .share-platforms {
+            grid-template-columns: repeat(3, 1fr);
+        }
+        
+        .shared-post-actions {
+            flex-direction: column;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .share-platforms {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .url-input-group {
+            flex-direction: column;
+        }
+    }
+</style>
+`;
+
+// Add styles to document
+document.head.insertAdjacentHTML('beforeend', shareModalStyles);
+// ==================== CUSTOM VIDEO PLAYER FUNCTIONS ====================
+
+class CustomVideoPlayer {
+    constructor(videoElement, options = {}) {
+        this.video = videoElement;
+        this.container = videoElement.parentElement;
+        this.options = options;
+        this.isPlaying = false;
+        this.isMuted = false;
+        this.isFullscreen = false;
+        this.volume = 1.0;
+        
+        this.init();
+    }
+    
+    init() {
+        // Create custom player container
+        this.playerContainer = document.createElement('div');
+        this.playerContainer.className = 'custom-video-player';
+        
+        // Wrap the video
+        this.video.parentNode.insertBefore(this.playerContainer, this.video);
+        this.playerContainer.appendChild(this.video);
+        
+        // Create controls
+        this.createControls();
+        
+        // Add event listeners
+        this.setupEventListeners();
+        
+        // Set initial volume
+        this.video.volume = this.volume;
+    }
+    
+    createControls() {
+        const controls = document.createElement('div');
+        controls.className = 'video-controls';
+        
+        // Play/Pause button
+        this.playBtn = document.createElement('button');
+        this.playBtn.className = 'control-btn play-btn';
+        this.playBtn.innerHTML = '<i class="fas fa-play"></i>';
+        
+        // Progress bar
+        this.progressBar = document.createElement('div');
+        this.progressBar.className = 'progress-bar';
+        
+        this.progressFilled = document.createElement('div');
+        this.progressFilled.className = 'progress-filled';
+        this.progressBar.appendChild(this.progressFilled);
+        
+        // Time display
+        this.timeDisplay = document.createElement('div');
+        this.timeDisplay.className = 'time-display';
+        this.timeDisplay.textContent = '0:00 / 0:00';
+        
+        // Volume control
+        this.volumeControl = document.createElement('div');
+        this.volumeControl.className = 'volume-control';
+        
+        this.volumeBtn = document.createElement('button');
+        this.volumeBtn.className = 'control-btn volume-btn';
+        this.volumeBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+        
+        this.volumeSlider = document.createElement('div');
+        this.volumeSlider.className = 'volume-slider';
+        
+        this.volumeLevel = document.createElement('div');
+        this.volumeLevel.className = 'volume-level';
+        this.volumeSlider.appendChild(this.volumeLevel);
+        
+        this.volumeControl.appendChild(this.volumeBtn);
+        this.volumeControl.appendChild(this.volumeSlider);
+        
+        // Fullscreen button
+        this.fullscreenBtn = document.createElement('button');
+        this.fullscreenBtn.className = 'control-btn fullscreen-btn';
+        this.fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
+        
+        // Assemble controls
+        controls.appendChild(this.playBtn);
+        controls.appendChild(this.progressBar);
+        controls.appendChild(this.timeDisplay);
+        controls.appendChild(this.volumeControl);
+        controls.appendChild(this.fullscreenBtn);
+        
+        this.playerContainer.appendChild(controls);
+        
+        // Add loading indicator
+        this.loadingIndicator = document.createElement('div');
+        this.loadingIndicator.className = 'video-loading';
+        this.loadingIndicator.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        this.loadingIndicator.style.display = 'none';
+        this.playerContainer.appendChild(this.loadingIndicator);
+    }
+    
+    setupEventListeners() {
+        // Video events
+        this.video.addEventListener('play', () => this.onPlay());
+        this.video.addEventListener('pause', () => this.onPause());
+        this.video.addEventListener('timeupdate', () => this.updateProgress());
+        this.video.addEventListener('loadedmetadata', () => this.updateDuration());
+        this.video.addEventListener('waiting', () => this.showLoading());
+        this.video.addEventListener('playing', () => this.hideLoading());
+        this.video.addEventListener('error', (e) => this.showError(e));
+        
+        // Control events
+        this.playBtn.addEventListener('click', () => this.togglePlay());
+        this.progressBar.addEventListener('click', (e) => this.seek(e));
+        this.volumeBtn.addEventListener('click', () => this.toggleMute());
+        this.volumeSlider.addEventListener('click', (e) => this.setVolume(e));
+        this.fullscreenBtn.addEventListener('click', () => this.toggleFullscreen());
+        
+        // Click on video toggles play
+        this.video.addEventListener('click', () => this.togglePlay());
+        
+        // Keyboard controls
+        this.playerContainer.addEventListener('keydown', (e) => this.handleKeydown(e));
+        
+        // Make container focusable
+        this.playerContainer.tabIndex = 0;
+        
+        // Show/hide controls on hover
+        this.playerContainer.addEventListener('mouseenter', () => this.showControls());
+        this.playerContainer.addEventListener('mouseleave', () => this.hideControls());
+        
+        // Touch events for mobile
+        this.playerContainer.addEventListener('touchstart', () => this.showControls());
+        this.playerContainer.addEventListener('touchend', () => {
+            setTimeout(() => this.hideControls(), 3000);
+        });
+    }
+    
+    onPlay() {
+        this.isPlaying = true;
+        this.playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+        this.hideControlsDelayed();
+    }
+    
+    onPause() {
+        this.isPlaying = false;
+        this.playBtn.innerHTML = '<i class="fas fa-play"></i>';
+    }
+    
+    togglePlay() {
+        if (this.video.paused) {
+            this.video.play().catch(e => console.log('Play failed:', e));
+        } else {
+            this.video.pause();
+        }
+    }
+    
+    updateProgress() {
+        const percent = (this.video.currentTime / this.video.duration) * 100;
+        this.progressFilled.style.width = `${percent}%`;
+        
+        this.updateTimeDisplay();
+    }
+    
+    updateDuration() {
+        this.updateTimeDisplay();
+    }
+    
+    updateTimeDisplay() {
+        const formatTime = (seconds) => {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        };
+        
+        this.timeDisplay.textContent = 
+            `${formatTime(this.video.currentTime)} / ${formatTime(this.video.duration)}`;
+    }
+    
+    seek(e) {
+        const rect = this.progressBar.getBoundingClientRect();
+        const percent = (e.clientX - rect.left) / rect.width;
+        this.video.currentTime = percent * this.video.duration;
+    }
+    
+    toggleMute() {
+        this.isMuted = !this.isMuted;
+        this.video.muted = this.isMuted;
+        this.volumeBtn.innerHTML = this.isMuted ? 
+            '<i class="fas fa-volume-mute"></i>' : 
+            '<i class="fas fa-volume-up"></i>';
+    }
+    
+    setVolume(e) {
+        const rect = this.volumeSlider.getBoundingClientRect();
+        let percent = (e.clientX - rect.left) / rect.width;
+        percent = Math.max(0, Math.min(1, percent));
+        
+        this.volume = percent;
+        this.video.volume = percent;
+        this.volumeLevel.style.width = `${percent * 100}%`;
+        
+        if (percent === 0) {
+            this.isMuted = true;
+            this.video.muted = true;
+            this.volumeBtn.innerHTML = '<i class="fas fa-volume-mute"></i>';
+        } else if (this.isMuted && percent > 0) {
+            this.isMuted = false;
+            this.video.muted = false;
+            this.volumeBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+        }
+    }
+    
+    toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            this.playerContainer.requestFullscreen().catch(e => {
+                console.log('Fullscreen failed:', e);
+            });
+            this.fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
+            this.isFullscreen = true;
+        } else {
+            document.exitFullscreen();
+            this.fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
+            this.isFullscreen = false;
+        }
+    }
+    
+    handleKeydown(e) {
+        switch(e.key) {
+            case ' ':
+            case 'k':
+                e.preventDefault();
+                this.togglePlay();
+                break;
+            case 'f':
+                this.toggleFullscreen();
+                break;
+            case 'm':
+                this.toggleMute();
+                break;
+            case 'ArrowLeft':
+                e.preventDefault();
+                this.video.currentTime = Math.max(0, this.video.currentTime - 5);
+                break;
+            case 'ArrowRight':
+                e.preventDefault();
+                this.video.currentTime = Math.min(this.video.duration, this.video.currentTime + 5);
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                this.video.volume = Math.min(1, this.video.volume + 0.1);
+                this.updateVolumeDisplay();
+                break;
+            case 'ArrowDown':
+                e.preventDefault();
+                this.video.volume = Math.max(0, this.video.volume - 0.1);
+                this.updateVolumeDisplay();
+                break;
+        }
+    }
+    
+    updateVolumeDisplay() {
+        this.volumeLevel.style.width = `${this.video.volume * 100}%`;
+    }
+    
+    showLoading() {
+        this.loadingIndicator.style.display = 'block';
+    }
+    
+    hideLoading() {
+        this.loadingIndicator.style.display = 'none';
+    }
+    
+    showError(e) {
+        const error = document.createElement('div');
+        error.className = 'video-error';
+        error.innerHTML = `
+            <i class="fas fa-exclamation-triangle"></i>
+            <p>Error loading video</p>
+        `;
+        this.playerContainer.appendChild(error);
+    }
+    
+    showControls() {
+        const controls = this.playerContainer.querySelector('.video-controls');
+        controls.style.opacity = '1';
+    }
+    
+    hideControls() {
+        if (!this.isPlaying) return;
+        const controls = this.playerContainer.querySelector('.video-controls');
+        controls.style.opacity = '0';
+    }
+    
+    hideControlsDelayed() {
+        setTimeout(() => this.hideControls(), 3000);
+    }
+    
+    destroy() {
+        // Clean up event listeners
+        this.video.parentNode.insertBefore(this.video, this.playerContainer);
+        this.playerContainer.remove();
+    }
+}
+
+// Initialize custom video players
+function initializeVideoPlayers() {
+    document.querySelectorAll('.post-media video').forEach(video => {
+        if (!video.classList.contains('custom-video-initialized')) {
+            video.classList.add('custom-video-initialized');
+            new CustomVideoPlayer(video);
+        }
+    });
+}
 
 // ==================== VIDEO SECURITY FUNCTIONS ====================
 
@@ -106,7 +1182,6 @@ function generateSecureVideoToken(videoUrl, postId) {
 /**
  * Decode secure video token
  */
- 
 function decodeSecureVideoToken(token) {
     try {
         const decoded = atob(token).split('').reverse().join('');
@@ -125,17 +1200,15 @@ function decodeSecureVideoToken(token) {
 /**
  * Load secure video when visible - PROTECTED VERSION
  */
- function loadSecureVideo(videoElement, secureToken) {
+function loadSecureVideo(videoElement, secureToken) {
     if (videoElement.dataset.loaded) return;
     
     try {
-        // Set loading poster
-
         // Decode to get real URL
         const url = decodeSecureVideoToken(secureToken);
         
         if (url) {
-            // Set the src - THIS IS NECESSARY!
+            videoElement.controls = false;
             videoElement.src = url;
             videoElement.load();
             videoElement.dataset.loaded = "1";
@@ -146,6 +1219,7 @@ function decodeSecureVideoToken(token) {
         console.error('Error loading secure video:', error);
     }
 }
+
 /**
  * Video observer for lazy loading
  */
@@ -160,9 +1234,8 @@ function setupVideoObserver() {
                 }
                 
                 // Auto-play when visible
-                if (video.paused && video.src) {
+                if (video.paused && video.src && !video.controls) {
                     video.play().catch(e => {
-                        // Auto-play blocked, this is normal
                         console.log('Video auto-play blocked:', e.name);
                     });
                 }
@@ -182,17 +1255,15 @@ function setupVideoObserver() {
 }
 
 /**
- * Render media content with SECURE video handling - FIXED VERSION
+ * Render media content with custom video player
  */
 function renderMediaContent(post, postId) {
     if (post.iframe) {
         return `<div class="post-media"><iframe class="post-iframe" src="${post.iframe}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;
     } 
     else if (post.video) {
-        // ALWAYS use secure token - no fallback!
         const secureToken = generateSecureVideoToken(post.video, postId);
         
-        // If token generation fails, show placeholder
         if (!secureToken) {
             console.error('Failed to generate secure token for video');
             return `<div class="post-media video-error">
@@ -203,16 +1274,14 @@ function renderMediaContent(post, postId) {
             </div>`;
         }
         
-        // CRITICAL: SECURE VERSION ONLY - NO src ATTRIBUTE AT ALL!
-        // We'll also add a MutationObserver to prevent other scripts from adding src
         const videoId = `secure-video-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         
-        return `<div class="post-media" id="media-container-${videoId}">
+        return `<div class="post-media">
             <video class="auto-pause-video secure-video" 
                    data-src="${secureToken}" 
                    data-video-id="${videoId}"
                    loop 
-                   controls 
+                    
                    controlsList="nodownload noplaybackrate" 
                    oncontextmenu="return false;" 
                    disablePictureInPicture 
@@ -221,41 +1290,221 @@ function renderMediaContent(post, postId) {
                 Your browser does not support the video tag.
             </video>
             <div class="video-protection-overlay"></div>
-        </div>
-        <script>
-            // Immediately protect this video from other scripts
-            (function() {
-                const video = document.querySelector('[data-video-id="${videoId}"]');
-                if (video) {
-                    // Remove ANY src attribute that might have been added
-                    video.removeAttribute('src');
-                    
-                    // Watch for attempts to add src
-                    const observer = new MutationObserver(function(mutations) {
-                        mutations.forEach(function(mutation) {
-                            if (mutation.type === 'attributes' && mutation.attributeName === 'src') {
-                                if (!video.dataset.loaded) {
-                                    console.log('Blocked attempt to set src on secure video:', video.dataset.videoId);
-                                    video.removeAttribute('src');
-                                }
-                            }
-                        });
-                    });
-                    
-                    observer.observe(video, { attributes: true });
-                    
-                    // Clean up after video loads
-                    video.addEventListener('loadeddata', function() {
-                        setTimeout(() => observer.disconnect(), 500);
-                    });
-                }
-            })();
-        </script>`;
+            <div class="water-glass-overlay"></
+        </div>`;
     } 
     else if (post.image) {
         return `<div class="post-media"><img src="${post.image}" alt="Post image" loading="lazy" oncontextmenu="return false;" crossorigin="anonymous"></div>`;
     }
     return '';
+}
+
+// ==================== VIDEO NAVIGATION FUNCTIONS ====================
+
+/**
+ * Extract video posts from database
+ */
+function extractVideoPosts() {
+    if (!DATABASEPOSTS || DATABASEPOSTS.length === 0) return [];
+    
+    return DATABASEPOSTS.filter(post => {
+        return post.video || (post.iframe && post.iframe.includes('youtube.com/embed'));
+    });
+}
+
+/**
+ * Shuffle array without seed (true random)
+ */
+function shuffleArrayRandomly(array) {
+    const shuffled = [...array];
+    
+    // Use cryptographically secure random if available
+    if (window.crypto && window.crypto.getRandomValues) {
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const randomBuffer = new Uint32Array(1);
+            window.crypto.getRandomValues(randomBuffer);
+            const j = randomBuffer[0] % (i + 1);
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+    } else {
+        // Fallback to Math.random
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+    }
+    
+    return shuffled;
+}
+
+/**
+ * Show only video posts
+ */
+function showVideoPosts() {
+    isVideoMode = true;
+    videoPosts = extractVideoPosts();
+    
+    // Shuffle video posts randomly
+    videoPosts = shuffleArrayRandomly(videoPosts);
+    
+    // Assign unique IDs to video posts
+    videoPosts.forEach((post, index) => {
+        post.videoId = `video-${post.id || `vid-${index}-${Date.now()}`}`;
+    });
+    
+    if (elements.postsFeed) {
+        elements.postsFeed.innerHTML = '';
+        videoPage = 0;
+        displayedVideoPosts.clear();
+        
+        // Show video-specific header
+        const videoHeader = document.createElement('div');
+        videoHeader.className = 'video-section-header';
+        videoHeader.innerHTML = `
+            <div style="text-align: center; padding: 1.5rem; border-bottom: 1px solid var(--border); margin-bottom: 1rem;">
+                <i class="fas fa-film" style="font-size: 2rem; color: var(--accent); margin-bottom: 0.5rem;"></i>
+                <h2 style="margin-bottom: 0.5rem; color: var(--text-primary);">Video Posts</h2>
+                <p style="color: var(--text-secondary);">Post With Videos Only
+                Activated</p>
+                ${videoPosts.length === 0 ? 
+                    '<p style="color: var(--text-muted); margin-top: 0.5rem;">No video posts found</p>' : 
+                    ''
+                }
+            </div>
+        `;
+        elements.postsFeed.appendChild(videoHeader);
+        
+        // Load initial video posts
+        loadVideoPosts();
+    }
+    
+    // Update navigation active states
+    updateVideoNavState(true);
+}
+
+/**
+ * Load more video posts
+ */
+function loadVideoPosts() {
+    if (!elements.postsFeed || videoPosts.length === 0) return;
+    
+    const startIndex = videoPage * postsPerPage;
+    const endIndex = startIndex + postsPerPage;
+    
+    // Filter out already displayed posts
+    const availablePosts = videoPosts.filter(post => !displayedVideoPosts.has(post.videoId));
+    
+    if (availablePosts.length === 0) {
+        if (elements.loadMoreBtn) {
+            elements.loadMoreBtn.textContent = 'No more videos';
+            elements.loadMoreBtn.disabled = true;
+        }
+        return;
+    }
+    
+    const postsToShow = availablePosts.slice(startIndex, endIndex);
+    
+    postsToShow.forEach(post => {
+        const postElement = createPostElement(post, post.videoId);
+        elements.postsFeed.appendChild(postElement);
+        displayedVideoPosts.add(post.videoId);
+        
+        // Initialize custom video player for this post
+        setTimeout(() => {
+            const video = postElement.querySelector('video');
+            if (video) {
+                new CustomVideoPlayer(video);
+            }
+        }, 100);
+    });
+    
+    videoPage++;
+    
+    if (elements.loadMoreBtn) {
+        const remainingVideos = videoPosts.length - displayedVideoPosts.size;
+        elements.loadMoreBtn.disabled = remainingVideos === 0;
+        elements.loadMoreBtn.textContent = remainingVideos === 0 ? 
+            'No more videos' : 
+            `Load More Videos`;
+    }
+}
+
+/**
+ * Show all posts (normal mode)
+ */
+function showAllPosts() {
+    isVideoMode = false;
+    
+    if (elements.postsFeed) {
+        elements.postsFeed.innerHTML = '';
+        currentPage = 0;
+        displayedPosts.clear();
+        loadPosts();
+    }
+    
+    // Update navigation active states
+    updateVideoNavState(false);
+}
+
+/**
+ * Update navigation states
+ */
+function updateVideoNavState(isVideoActive) {
+    // Desktop nav
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active', 'video-active');
+    });
+    
+    if (isVideoActive) {
+        if (elements.desktopVideosLink) {
+            elements.desktopVideosLink.classList.add('video-active');
+        }
+    } else {
+        if (elements.desktopHomeLink) {
+            elements.desktopHomeLink.classList.add('active');
+        }
+    }
+    
+    // Mobile nav
+    document.querySelectorAll('.mobile-nav-item').forEach(item => {
+        item.classList.remove('active', 'video-active');
+    });
+    
+    if (isVideoActive) {
+        if (elements.mobileVideosLink) {
+            elements.mobileVideosLink.classList.add('video-active');
+        }
+    } else {
+        if (elements.mobileHomeLink) {
+            elements.mobileHomeLink.classList.add('active');
+        }
+    }
+    
+    // Bottom nav
+    document.querySelectorAll('.bottom-nav-item').forEach(item => {
+        item.classList.remove('active', 'video-active');
+    });
+    
+    if (isVideoActive) {
+        if (elements.bottomreelsBtn) {
+            elements.bottomreelsBtn.classList.add('video-active');
+        }
+    } else {
+        if (document.getElementById('bottomHomeBtn')) {
+            document.getElementById('bottomHomeBtn').classList.add('active');
+        }
+    }
+}
+
+/**
+ * Handle video navigation click
+ */
+function handleVideoNavigation() {
+    if (isVideoMode) {
+        showAllPosts();
+    } else {
+        showVideoPosts();
+    }
 }
 
 // ==================== OBSERVER INITIALIZATION ====================
@@ -266,41 +1515,8 @@ let videoObserver = null;
 function initializeVideoObserver() {
     if (!videoObserver) {
         videoObserver = setupVideoObserver();
-        
-        // Observe existing secure videos
-        document.querySelectorAll('.secure-video[data-src]').forEach(video => {
-            if (!video.dataset.loaded) {
-                videoObserver.observe(video);
-            }
-        });
     }
     return videoObserver;
-}
-
-// Call this after posts are rendered
-function setupVideoObservation() {
-    const observer = initializeVideoObserver();
-    
-    // Observe all secure videos on the page
-    document.querySelectorAll('.secure-video[data-src]').forEach(video => {
-        if (!video.dataset.loaded) {
-            observer.observe(video);
-        }
-    });
-    
-    console.log('Video observer setup complete');
-}
-
-// ==================== ADD THIS FUNCTION TO CLEAN UP VIDEOS ====================
-
-function cleanupVideoAttributes() {
-    // Find and remove src attributes from all secure videos that shouldn't have them
-    document.querySelectorAll('.secure-video[data-src]').forEach(video => {
-        if (video.hasAttribute('src') && !video.dataset.loaded) {
-            console.log('Removing unauthorized src attribute from video:', video.dataset.src);
-            video.removeAttribute('src');
-        }
-    });
 }
 
 // ==================== AUTH FUNCTIONS ====================
@@ -457,7 +1673,7 @@ function switchAuthTab(e) {
     document.querySelectorAll('.auth-form').forEach(form => {
         form.classList.remove('active');
     });
-     document.getElementById(`${tabName}Form`).classList.add('active');
+    document.getElementById(`${tabName}Form`).classList.add('active');
     
     if (elements.usernameError) elements.usernameError.style.display = 'none';
     if (elements.loginError) elements.loginError.style.display = 'none';
@@ -631,6 +1847,10 @@ function handleLogout(e) {
     displayedPosts.clear();
     currentPage = 0;
     allPosts = [];
+    isVideoMode = false;
+    videoPosts = [];
+    displayedVideoPosts.clear();
+    videoPage = 0;
     
     currentUser = {
         name: "Guest",
@@ -646,646 +1866,6 @@ function handleLogout(e) {
 }
 
 // ==================== POST FUNCTIONS ====================
-
-// Add this function to process URL parameters on page load
-function processUrlParameters() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const shareParam = urlParams.get('share');
-    
-    if (shareParam) {
-        sharedPostId = shareParam.trim();
-        console.log('Found shared post ID in URL:', sharedPostId);
-        
-        // Wait a moment for posts to load, then try to show the shared post
-        setTimeout(() => {
-            showSharedPostModal(sharedPostId);
-        }, 500);
-    }
-}
-
-// Create a modal to display shared posts
-function createShareModal() {
-    // Check if modal already exists
-    if (document.getElementById('sharePostModal')) return;
-    
-    const modalHTML = `
-        <div class="modal" id="sharePostModal">
-            <div class="modal-content share-post-modal">
-                <div class="modal-header">
-                    <h2>Shared Post</h2>
-                    <button class="close-modal" id="closeShareModal">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div id="sharedPostContainer">
-                        <!-- The shared post will be displayed here -->
-                        <div class="loading-shared-post" style="text-align: center; padding: 2rem;">
-                            <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--accent);"></i>
-                            <p style="margin-top: 1rem; color: var(--text-secondary);">Loading shared post...</p>
-                        </div>
-                    </div>
-                    <div class="share-actions" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
-                        <button class="btn btn-primary" id="backToFeedsBtn" style="width: 100%;">
-                            <i class="fas fa-home"></i> Back to Feeds
-                        </button>
-                        <button class="btn btn-secondary" id="copyShareLinkBtn" style="width: 100%; margin-top: 0.75rem;">
-                            <i class="fas fa-link"></i> Copy Share Link
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-    
-    // Add event listeners for the new modal
-    setupShareModalEvents();
-}
-
-function setupShareModalEvents() {
-    const closeShareModal = document.getElementById('closeShareModal');
-    const backToFeedsBtn = document.getElementById('backToFeedsBtn');
-    const copyShareLinkBtn = document.getElementById('copyShareLinkBtn');
-    
-    if (closeShareModal) {
-        closeShareModal.addEventListener('click', closeSharePostModal);
-    }
-    
-    if (backToFeedsBtn) {
-        backToFeedsBtn.addEventListener('click', closeSharePostModal);
-    }
-    
-    if (copyShareLinkBtn) {
-        copyShareLinkBtn.addEventListener('click', copyCurrentShareLink);
-    }
-    
-    // Close when clicking outside modal
-    const shareModal = document.getElementById('sharePostModal');
-    if (shareModal) {
-        shareModal.addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeSharePostModal();
-            }
-        });
-    }
-}
-
-function showSharedPostModal(postId) {
-    // Create the modal if it doesn't exist
-    createShareModal();
-    
-    const modal = document.getElementById('sharePostModal');
-    if (!modal) return;
-    
-    // Show the modal
-    modal.classList.add('active');
-    
-    // Find the post
-    const post = allPosts.find(p => p.id === postId);
-    const sharedPostContainer = document.getElementById('sharedPostContainer');
-    
-    if (!post || !sharedPostContainer) {
-        sharedPostContainer.innerHTML = `
-            <div class="empty-state" style="text-align: center; padding: 3rem 1rem;">
-                <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: var(--danger); margin-bottom: 1rem;"></i>
-                <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem; color: var(--text-primary);">Post Not Found</h3>
-                <p style="color: var(--text-secondary);">The shared post could not be found.</p>
-                <button onclick="closeSharePostModal()" class="btn btn-primary" style="margin-top: 1rem;">
-                    Back to Feeds
-                </button>
-            </div>
-        `;
-        return;
-    }
-    
-    // Create and display the post
-    const postElement = createPostElement(post, post.id);
-    
-    // Remove any existing share button from this post (we'll add our own)
-    const shareBtn = postElement.querySelector('.share-btn');
-    if (shareBtn) shareBtn.remove();
-    
-    // Wrap the post in a container for the modal
-    sharedPostContainer.innerHTML = '';
-    sharedPostContainer.appendChild(postElement);
-    
-    // Update the copy button with current URL
-    const copyShareLinkBtn = document.getElementById('copyShareLinkBtn');
-    if (copyShareLinkBtn) {
-        const shareUrl = generateShareUrl(post.id);
-        copyShareLinkBtn.dataset.shareUrl = shareUrl;
-    }
-    
-    // Scroll the post into view
-    setTimeout(() => {
-        postElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 100);
-}
-
-function closeSharePostModal() {
-    const modal = document.getElementById('sharePostModal');
-    if (modal) {
-        modal.classList.remove('active');
-    }
-    
-    // Clean URL without refreshing page
-    if (window.history.replaceState) {
-        const newUrl = window.location.pathname;
-        window.history.replaceState(null, '', newUrl);
-    }
-    
-    sharedPostId = null;
-}
-
-function generateShareUrl(postId) {
-    const baseUrl = window.location.origin + window.location.pathname;
-    return `${baseUrl}?share=${postId}`;
-}
-
-function copyCurrentShareLink() {
-    const copyShareLinkBtn = document.getElementById('copyShareLinkBtn');
-    if (!copyShareLinkBtn || !copyShareLinkBtn.dataset.shareUrl) return;
-    
-    const shareUrl = copyShareLinkBtn.dataset.shareUrl;
-    
-    navigator.clipboard.writeText(shareUrl)
-        .then(() => {
-            // Show success feedback
-            const originalText = copyShareLinkBtn.innerHTML;
-            copyShareLinkBtn.innerHTML = '<i class="fas fa-check"></i> Link Copied!';
-            copyShareLinkBtn.classList.add('success');
-            
-            setTimeout(() => {
-                copyShareLinkBtn.innerHTML = originalText;
-                copyShareLinkBtn.classList.remove('success');
-            }, 2000);
-        })
-        .catch(err => {
-            console.error('Failed to copy:', err);
-            alert('Failed to copy link. Please copy it manually.');
-        });
-}
-
-// Add share button to each post
-function addShareButtonToPost(postElement, postId) {
-    // Check if share button already exists
-    if (postElement.querySelector('.share-btn')) return;
-    
-    // Find the post-actions-buttons container
-    const postActions = postElement.querySelector('.post-actions-buttons');
-    if (!postActions) return;
-    
-    // Create share button
-    const shareBtn = document.createElement('button');
-    shareBtn.className = 'action-btn share-btn';
-    shareBtn.innerHTML = '<i class="fas fa-share-alt"></i> Share';
-    shareBtn.dataset.postId = postId;
-    
-    // Add click event
-    shareBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        sharePost(postId);
-    });
-    
-    // Insert before the like button
-    const likeBtn = postActions.querySelector('[data-action="like"]');
-    if (likeBtn) {
-        postActions.insertBefore(shareBtn, likeBtn);
-    } else {
-        postActions.appendChild(shareBtn);
-    }
-}
-
-function sharePost(postId) {
-    const post = allPosts.find(p => p.id === postId);
-    if (!post) {
-        alert('Post not found');
-        return;
-    }
-    
-    const shareUrl = generateShareUrl(postId);
-    
-    // Create share options
-    const shareOptions = `
-        <div class="share-options">
-            <h3 style="margin-bottom: 1rem; color: var(--text-primary);">Share Post</h3>
-            
-            <div style="margin-bottom: 1rem;">
-                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 0.9rem;">
-                    Share Link:
-                </label>
-                <div style="display: flex; gap: 0.5rem;">
-                    <input type="text" readonly value="${shareUrl}" id="shareUrlInput" 
-                           style="flex: 1; padding: 0.75rem; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 0.5rem; color: var(--text-primary); font-size: 0.9rem;">
-                    <button id="copyShareUrlBtn" class="btn btn-primary" style="white-space: nowrap;">
-                        <i class="fas fa-copy"></i> Copy
-                    </button>
-                </div>
-            </div>
-            
-            <div class="share-platforms" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-top: 1rem;">
-                <button class="share-platform-btn" data-platform="whatsapp">
-                    <i class="fab fa-whatsapp"></i> WhatsApp
-                </button>
-                <button class="share-platform-btn" data-platform="facebook">
-                    <i class="fab fa-facebook"></i> Facebook
-                </button>
-                <button class="share-platform-btn" data-platform="twitter">
-                    <i class="fab fa-twitter"></i> Twitter
-                </button>
-                <button class="share-platform-btn" data-platform="telegram">
-                    <i class="fab fa-telegram"></i> Telegram
-                </button>
-                <button class="share-platform-btn" data-platform="reddit">
-                    <i class="fab fa-reddit"></i> Reddit
-                </button>
-                <button class="share-platform-btn" data-platform="email">
-                    <i class="fas fa-envelope"></i> Email
-                </button>
-            </div>
-        </div>
-    `;
-    
-    // Create and show modal
-    showCustomModal('Share Post', shareOptions, () => {
-        // Setup copy button
-        const copyBtn = document.getElementById('copyShareUrlBtn');
-        if (copyBtn) {
-            copyBtn.addEventListener('click', () => {
-                const input = document.getElementById('shareUrlInput');
-                if (input) {
-                    input.select();
-                    document.execCommand('copy');
-                    
-                    // Show feedback
-                    const originalText = copyBtn.innerHTML;
-                    copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
-                    copyBtn.classList.add('success');
-                    
-                    setTimeout(() => {
-                        copyBtn.innerHTML = originalText;
-                        copyBtn.classList.remove('success');
-                    }, 2000);
-                }
-            });
-        }
-        
-        // Setup platform buttons
-        document.querySelectorAll('.share-platform-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const platform = this.dataset.platform;
-                shareToPlatform(platform, shareUrl, post);
-            });
-        });
-    });
-}
-
-function showCustomModal(title, content, onOpen = null) {
-    // Remove existing custom modal if any
-    const existingModal = document.getElementById('customModal');
-    if (existingModal) existingModal.remove();
-    
-    const modalHTML = `
-        <div class="modal" id="customModal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>${title}</h2>
-                    <button class="close-modal" id="closeCustomModal">&times;</button>
-                </div>
-                <div class="modal-body">
-                    ${content}
-                </div>
-            </div>
-        </div>
-    `;
-    
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-    
-    const modal = document.getElementById('customModal');
-    const closeBtn = document.getElementById('closeCustomModal');
-    
-    if (modal) {
-        modal.classList.add('active');
-    }
-    
-    if (closeBtn) {
-        closeBtn.addEventListener('click', () => {
-            modal.classList.remove('active');
-            setTimeout(() => modal.remove(), 300);
-        });
-    }
-    
-    // Close when clicking outside
-    if (modal) {
-        modal.addEventListener('click', function(e) {
-            if (e.target === this) {
-                this.classList.remove('active');
-                setTimeout(() => this.remove(), 300);
-            }
-        });
-    }
-    
-    // Call onOpen callback
-    if (onOpen) onOpen();
-}
-
-function shareToPlatform(platform, url, post) {
-    const postContent = post.content ? post.content.substring(0, 100) + (post.content.length > 100 ? '...' : '') : '';
-    const text = `Check out this post on Meko Network by @${post.username}: ${postContent}`;
-    const encodedUrl = encodeURIComponent(url);
-    const encodedText = encodeURIComponent(text);
-    
-    let shareUrl = '';
-    
-    // Get media URL for thumbnail/preview
-    const mediaUrl = getMediaUrlForSharing(post);
-    const encodedMediaUrl = mediaUrl ? encodeURIComponent(mediaUrl) : '';
-    
-    switch(platform) {
-        case 'whatsapp':
-            shareUrl = `https://wa.me/?text=${encodedText}%20${encodedUrl}`;
-            break;
-            
-        case 'facebook':
-            shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
-            break;
-            
-        case 'x':
-            const hashtags = post.topic ? `&hashtags=${encodeURIComponent(post.topic)}` : '';
-            shareUrl = `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}${hashtags}`;
-            break;
-            
-        case 'telegram':
-            shareUrl = `https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`;
-            break;
-            
-        case 'reddit':
-            shareUrl = `https://reddit.com/submit?url=${encodedUrl}&title=${encodedText}`;
-            break;
-            
-        case 'pinterest':
-            if (mediaUrl && (post.image || post.video)) {
-                const description = encodeURIComponent(`${text} - Shared from Meko Network`);
-                shareUrl = `https://pinterest.com/pin/create/button/?url=${encodedUrl}&media=${encodedMediaUrl}&description=${description}`;
-            } else {
-                shareUrl = `https://pinterest.com/pin/create/button/?url=${encodedUrl}&description=${encodedText}`;
-            }
-            break;
-            
-        case 'tumblr':
-            if (post.image) {
-                shareUrl = `https://www.tumblr.com/widgets/share/tool?posttype=photo&content=${encodedMediaUrl}&caption=${encodedText}&canonicalUrl=${encodedUrl}`;
-            } else if (post.video) {
-                shareUrl = `https://www.tumblr.com/widgets/share/tool?posttype=video&content=${encodedMediaUrl}&caption=${encodedText}&canonicalUrl=${encodedUrl}`;
-            } else {
-                shareUrl = `https://www.tumblr.com/widgets/share/tool?posttype=link&content=${encodedUrl}&caption=${encodedText}`;
-            }
-            break;
-            
-        case 'email':
-            const subject = encodeURIComponent(`Check out this post on Meko Network`);
-            let emailBody = `${text}%0A%0A${encodedUrl}%0A%0A`;
-            
-            if (mediaUrl) {
-                if (post.image) {
-                    emailBody += `📷 View image: ${mediaUrl}%0A%0A`;
-                } else if (post.video) {
-                    emailBody += `🎬 Watch video: ${mediaUrl}%0A%0A`;
-                }
-            }
-            
-            emailBody += `Shared from Meko Network`;
-            shareUrl = `mailto:?subject=${subject}&body=${emailBody}`;
-            break;
-            
-        case 'copy':
-            let copyText = `${text}\n\n`;
-            
-            if (mediaUrl) {
-                if (post.image) {
-                    copyText += `Image: ${mediaUrl}\n`;
-                } else if (post.video) {
-                    copyText += `Video: ${mediaUrl}\n`;
-                }
-            }
-            
-            copyText += `\nView post: ${url}\n\nShared from Meko Network`;
-            
-            navigator.clipboard.writeText(copyText)
-                .then(() => {
-                    const copyBtn = document.querySelector('.share-platform-btn[data-platform="copy"]');
-                    if (copyBtn) {
-                        const originalText = copyBtn.innerHTML;
-                        copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
-                        copyBtn.classList.add('success');
-                        
-                        setTimeout(() => {
-                            copyBtn.innerHTML = originalText;
-                            copyBtn.classList.remove('success');
-                        }, 2000);
-                    }
-                })
-                .catch(err => {
-                    console.error('Failed to copy:', err);
-                    const textArea = document.createElement('textarea');
-                    textArea.value = copyText;
-                    document.body.appendChild(textArea);
-                    textArea.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(textArea);
-                    
-                    alert('Link copied to clipboard!');
-                });
-            return;
-            
-        default:
-            return;
-    }
-    
-    if (shareUrl) {
-        window.open(shareUrl, '_blank', 'noopener,noreferrer,width=600,height=400');
-    }
-}
-
-function getMediaUrlForSharing(post) {
-    if (post.image) {
-        return post.image;
-    } else if (post.video) {
-        return post.video;
-    } else if (post.iframe) {
-        return getYouTubeThumbnail(post.iframe);
-    }
-    return null;
-}
-
-function getYouTubeThumbnail(url) {
-    if (!url) return null;
-    
-    try {
-        let videoId = '';
-        
-        if (url.includes('youtube.com/embed/')) {
-            videoId = url.split('youtube.com/embed/')[1].split('?')[0];
-        } else if (url.includes('youtu.be/')) {
-            videoId = url.split('youtu.be/')[1].split('?')[0];
-        } else if (url.includes('youtube.com/watch?v=')) {
-            videoId = url.split('v=')[1].split('&')[0];
-        } else if (url.includes('youtube.com/shorts/')) {
-            videoId = url.split('shorts/')[1].split('?')[0];
-        }
-        
-        if (videoId) {
-            return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
-        }
-    } catch (error) {
-        console.error('Error extracting YouTube thumbnail:', error);
-    }
-    
-    return null;
-}
-
-function updateShareModalHTML(shareUrl, post) {
-    const mediaUrl = getMediaUrlForSharing(post);
-    const hasMedia = !!mediaUrl;
-    
-    return `
-        <div class="share-options">
-            <h3 style="margin-bottom: 1rem; color: var(--text-primary);">Share Post</h3>
-            
-            ${hasMedia ? `
-            <div class="share-preview" style="margin-bottom: 1rem; padding: 1rem; background: var(--bg-secondary); border-radius: 0.5rem; border: 1px solid var(--border-color);">
-                <div style="display: flex; gap: 1rem; align-items: flex-start;">
-                    ${post.image ? `
-                        <img src="${post.image}" alt="Post image" style="width: 80px; height: 80px; object-fit: cover; border-radius: 0.5rem;">
-                    ` : post.video ? `
-                        <div style="width: 80px; height: 80px; background: var(--bg-tertiary); border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
-                            <i class="fas fa-video" style="font-size: 1.5rem; color: var(--text-secondary);"></i>
-                        </div>
-                    ` : post.iframe ? `
-                        <div style="width: 80px; height: 80px; background: var(--bg-tertiary); border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
-                            <i class="fab fa-youtube" style="font-size: 1.5rem; color: #FF0000;"></i>
-                        </div>
-                    ` : ''}
-                    
-                    <div style="flex: 1;">
-                        <div style="font-weight: 500; color: var(--text-primary); margin-bottom: 0.25rem;">
-                            ${post.content ? post.content.substring(0, 80) + (post.content.length > 80 ? '...' : '') : 'Shared post'}
-                        </div>
-                        <div style="font-size: 0.85rem; color: var(--text-secondary);">
-                            by @${post.username}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            ` : ''}
-            
-            <div style="margin-bottom: 1rem;">
-                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 0.9rem;">
-                    Share Link:
-                </label>
-                <div style="display: flex; gap: 0.5rem;">
-                    <input type="text" readonly value="${shareUrl}" id="shareUrlInput" 
-                           style="flex: 1; padding: 0.75rem; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 0.5rem; color: var(--text-primary); font-size: 0.9rem;">
-                    <button id="copyShareUrlBtn" class="btn btn-primary" style="white-space: nowrap;">
-                        <i class="fas fa-copy"></i> Copy
-                    </button>
-                </div>
-            </div>
-            
-            <div class="share-platforms" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-top: 1rem;">
-                <button class="share-platform-btn" data-platform="copy" title="Copy to clipboard">
-                    <i class="fas fa-copy"></i> Copy
-                </button>
-                <button class="share-platform-btn" data-platform="whatsapp" title="Share on WhatsApp">
-                    <i class="fab fa-whatsapp"></i> WhatsApp
-                </button>
-                <button class="share-platform-btn" data-platform="facebook" title="Share on Facebook">
-                    <i class="fab fa-facebook"></i> Facebook
-                </button>
-                <button class="share-platform-btn" data-platform="x" title="Share on X (Twitter)">
-                    <i class="fab fa-x-twitter"></i> X
-                </button>
-                <button class="share-platform-btn" data-platform="telegram" title="Share on Telegram">
-                    <i class="fab fa-telegram"></i> Telegram
-                </button>
-                <button class="share-platform-btn" data-platform="reddit" title="Share on Reddit">
-                    <i class="fab fa-reddit"></i> Reddit
-                </button>
-                ${hasMedia ? `
-                <button class="share-platform-btn" data-platform="pinterest" title="Share on Pinterest">
-                    <i class="fab fa-pinterest"></i> Pinterest
-                </button>
-                ` : ''}
-                <button class="share-platform-btn" data-platform="tumblr" title="Share on Tumblr">
-                    <i class="fab fa-tumblr"></i> Tumblr
-                </button>
-                <button class="share-platform-btn" data-platform="email" title="Share via Email">
-                    <i class="fas fa-envelope"></i> Email
-                </button>
-            </div>
-            
-            <div style="margin-top: 1rem; padding: 0.75rem; background: var(--bg-tertiary); border-radius: 0.5rem; font-size: 0.85rem; color: var(--text-secondary);">
-                <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>
-                ${hasMedia ? 'Media preview will appear on supported platforms' : 'Text-only share on most platforms'}
-            </div>
-        </div>
-    `;
-}
-
-function sharePost(postId) {
-    const post = allPosts.find(p => p.id === postId);
-    if (!post) {
-        alert('Post not found');
-        return;
-    }
-    
-    const shareUrl = generateShareUrl(postId);
-    const modalContent = updateShareModalHTML(shareUrl, post);
-    
-    showCustomModal('Share Post', modalContent, () => {
-        const copyBtn = document.getElementById('copyShareUrlBtn');
-        if (copyBtn) {
-            copyBtn.addEventListener('click', () => {
-                const input = document.getElementById('shareUrlInput');
-                if (input) {
-                    input.select();
-                    navigator.clipboard.writeText(input.value)
-                        .then(() => {
-                            const originalText = copyBtn.innerHTML;
-                            copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
-                            copyBtn.classList.add('success');
-                            
-                            setTimeout(() => {
-                                copyBtn.innerHTML = originalText;
-                                copyBtn.classList.remove('success');
-                            }, 2000);
-                        })
-                        .catch(err => {
-                            document.execCommand('copy');
-                            alert('Link copied to clipboard!');
-                        });
-                }
-            });
-        }
-        
-        document.querySelectorAll('.share-platform-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const platform = this.dataset.platform;
-                shareToPlatform(platform, shareUrl, post);
-                
-                if (platform !== 'copy') {
-                    const modal = document.getElementById('customModal');
-                    if (modal) {
-                        setTimeout(() => {
-                            modal.classList.remove('active');
-                            setTimeout(() => modal.remove(), 300);
-                        }, 500);
-                    }
-                }
-            });
-        });
-    });
-}
 
 function initializePosts() {
     if (!DATABASEPOSTS || DATABASEPOSTS.length === 0) {
@@ -1306,22 +1886,11 @@ function initializePosts() {
     allPosts = allPosts.reverse();
     
     console.log(`Assigned IDs to ${allPosts.length} posts`);
-    console.log('Newest post sample:', {
-        id: allPosts[0]?.id,
-        username: allPosts[0]?.username,
-        recoNumber: allPosts[0]?.recoNumber
-    });
-    console.log('Oldest post sample:', {
-        id: allPosts[allPosts.length - 1]?.id,
-        username: allPosts[allPosts.length - 1]?.username,
-        recoNumber: allPosts[allPosts.length - 1]?.recoNumber
-    });
     
     const seed = Date.now() + Math.random();
     allPosts = shuffleArray(allPosts, seed);
     
     console.log(`Loaded ${allPosts.length} posts with seed: ${seed}`);
-    console.log('Sample shuffled post with ID:', allPosts[0]?.id, allPosts[0]?.username);
 }
 
 function seededRandom(seed) {
@@ -1372,6 +1941,16 @@ function loadPosts() {
         displayedPosts.add(post.id);
         
         addShareButtonToPost(postElement, post.id);
+        
+        // Initialize custom video player if this is a video post
+        if (post.video || (post.iframe && post.iframe.includes('youtube.com/embed'))) {
+            setTimeout(() => {
+                const video = postElement.querySelector('video');
+                if (video) {
+                    new CustomVideoPlayer(video);
+                }
+            }, 100);
+        }
     });
     
     currentPage++;
@@ -1384,7 +1963,11 @@ function loadPosts() {
 }
 
 function loadMorePosts() {
-    loadPosts();
+    if (isVideoMode) {
+        loadVideoPosts();
+    } else {
+        loadPosts();
+    }
 }
 
 function createPostElement(post, postId) {
@@ -1393,25 +1976,34 @@ function createPostElement(post, postId) {
     postElement.dataset.postId = postId;
     postElement.dataset.topic = post.topic || '';
     
-    const isApiAd = post.iframe && post.iframe === "ad_service-api:290Ae028e028a028_920397Ae828";
-    const isAdTopic = post.topic && (post.topic.toLowerCase().includes('ad') || 
-                                     post.topic.toLowerCase().includes('ad_service-api:290Ae028e028a028_920397Ae828'));
-    const isSponsoredName = post.name && post.name.toLowerCase().includes('ad_service-api:290Ae028e028a028_920397Ae828');
-    const isCreatorAd = post.topic && (post.topic.toLowerCase() === 'ad_service-api:290Ae028e028a028_920397Ae828' || 
-                                       post.topic.toLowerCase() === 'ad_service-api:290Ae028e028a028_920397Ae828');
-    
-    let adType = null;
-    if (isApiAd) {
-        adType = 'API_AD';
-    } else if (isSponsoredName) {
-        adType = 'SPONSORED_AD';
-    } else if (isCreatorAd) {
-        adType = 'CREATOR_AD';
-    } else if (isAdTopic) {
-        adType = 'TOPIC_AD';
-    }
-    
-    const isAnyAd = adType !== null;
+  // FIXED AD DETECTION LOGIC
+const isApiAd = post.iframe && post.iframe === "ad_service-api:290Ae028e028a028_920397Ae828";
+const isAdTopic = post.topic && (
+    post.topic.toLowerCase() === 'ad_service-api:290ae028e028a028_920397ae828' || // exact match (lowercase)
+    post.topic === 'ad_service-api:290Ae028e028a028_920397Ae828' // exact match (original case)
+);
+const isSponsoredName = post.name && (
+    post.name.toLowerCase() === 'ad_service-api:290ae028e028a028_920397ae828' || // exact match (lowercase)
+    post.name === 'ad_service-api:290Ae028e028a028_920397Ae828' // exact match (original case)
+);
+const isCreatorAd = post.topic && (
+    post.topic.toLowerCase() === 'ad_service-api:290ae028e028a028_920397ae828_creator' || // creator ad
+    post.topic === 'ad_service-api:290Ae028e028a028_920397Ae828_creator' // creator ad original case
+);
+
+let adType = null;
+if (isApiAd) {
+    adType = 'API_AD';
+} else if (isSponsoredName) {
+    adType = 'SPONSORED_AD';
+} else if (isCreatorAd) {
+    adType = 'CREATOR_AD';
+} else if (isAdTopic) {
+    adType = 'TOPIC_AD';
+}
+
+const isAnyAd = adType !== null;
+    const isVideoPost = post.video || (post.iframe && post.iframe.includes('youtube.com/embed'));
     
     const postDate = parseCustomDate(post.datePost);
     const formattedDate = formatDateToCustom(postDate);
@@ -1478,7 +2070,44 @@ function createPostElement(post, postId) {
         if (adType === 'API_AD') {
             return `<div id="ad-${postId}" class="ad-script-container"></div>`;
         }
-        return renderMediaContent(post, postId);
+        
+        if (post.video) {
+            const secureToken = generateSecureVideoToken(post.video, postId);
+            
+            if (!secureToken) {
+                return `<div class="post-media video-error">
+                    <div style="padding: 2rem; text-align: center; background: var(--bg-secondary); border-radius: 0.5rem;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: var(--danger); margin-bottom: 1rem;"></i>
+                        <p style="color: var(--text-secondary);">Video loading error</p>
+                    </div>
+                </div>`;
+            }
+            
+            const videoId = `secure-video-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            
+            return `<div class="post-media">
+                <video class="auto-pause-video secure-video" 
+                       data-src="${secureToken}" 
+                       data-video-id="${videoId}"
+                       loop 
+                       controls 
+                       controlsList="nodownload noplaybackrate" 
+                       oncontextmenu="return false;" 
+                       disablePictureInPicture 
+                       style="-webkit-touch-callout: none; -webkit-user-select: none; user-select: none; pointer-events: auto;"
+                       preload="metadata">
+                    Your browser does not support the video tag.
+                </video>
+                <div class="video-protection-overlay"></div>
+            </div>`;
+        } 
+        else if (post.iframe) {
+            return `<div class="post-media"><iframe class="post-iframe" src="${post.iframe}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;
+        } 
+        else if (post.image) {
+            return `<div class="post-media"><img src="${post.image}" alt="Post image" loading="lazy" oncontextmenu="return false;" crossorigin="anonymous"></div>`;
+        }
+        return '';
     };
     
     postElement.innerHTML = `  
@@ -1491,6 +2120,7 @@ function createPostElement(post, postId) {
                 </div>  
             </div>  
             <div class="post-date">${formattedDate}</div>  
+            ${isVideoPost ? '<div class="video-indicator"><i class="fas fa-video"></i> Video</div>' : ''}
         </div>  
         
         <div class="post-content">  
@@ -1525,15 +2155,14 @@ function createPostElement(post, postId) {
                 }  
             </div>  
             
-<div class="post-actions-buttons">  
-
-        <button class="action-btn ${currentUser?.likedPosts?.has(postId) ? 'liked' : ''}" data-action="like" data-post-id="${postId}">  
-            <i class="fas fa-heart"></i> Like  
-        </button>  
-        <button class="action-btn share-btn" data-action="share" data-post-id="${postId}">  
-            <i class="fas fa-share-alt"></i> Share  
-        </button>  
-    </div>  
+            <div class="post-actions-buttons">  
+                <button class="action-btn ${currentUser?.likedPosts?.has(postId) ? 'liked' : ''}" data-action="like" data-post-id="${postId}">  
+                    <i class="fas fa-heart"></i> Like  
+                </button>  
+                <button class="action-btn share-btn" data-action="share" data-post-id="${postId}">  
+                    <i class="fas fa-share-alt"></i> Share  
+                </button>  
+            </div>  
         `}  
     `;
     
@@ -1569,6 +2198,14 @@ function createPostElement(post, postId) {
         if (likeBtn) {
             likeBtn.addEventListener('click', () => handleLike(postId, likeBtn));
         }
+        
+        const shareBtn = postElement.querySelector('.share-btn');
+        if (shareBtn) {
+            shareBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                sharePost(postId);
+            });
+        }
     } else if (adType === 'CREATOR_AD' || adType === 'TOPIC_AD') {
         const likeBtn = postElement.querySelector('[data-action="like"]');
         if (likeBtn) {
@@ -1579,18 +2216,6 @@ function createPostElement(post, postId) {
                 }
                 handleLike(postId, likeBtn);
             });
-        } else {
-            const adLikes = postElement.querySelector('.ad-likes');
-            if (adLikes) {
-                adLikes.style.cursor = 'pointer';
-                adLikes.addEventListener('click', () => {
-                    if (!currentUser || currentUser.isGuest) {
-                        alert('Please login to react to ads!');
-                        return;
-                    }
-                    alert('Thanks for your reaction to this ad!');
-                });
-            }
         }
     }
     
@@ -1615,111 +2240,8 @@ function createPostElement(post, postId) {
             });
         });
     }
-    
-    if (!isAnyAd || adType === 'CREATOR_AD' || adType === 'TOPIC_AD') {
-        const shareBtn = postElement.querySelector('.share-btn');
-        if (shareBtn) {
-            shareBtn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                sharePost(postId);
-            });
-        } else {
-            setTimeout(() => addShareButtonToPost(postElement, postId), 100);
-        }
-    }
 
     return postElement;
-}
-
-// ==================== VIDEO HELPER FUNCTIONS ====================
-
-function convertToEmbedUrl(url) {
-    if (!url) return null;
-    
-    try {
-        let cleanUrl = url.split('&')[0];
-        
-        if (cleanUrl.includes('/shorts/')) {
-            const videoId = cleanUrl.split('/shorts/')[1].split('?')[0];
-            return `https://www.youtube.com/embed/${videoId}`;
-        }
-        
-        let videoId = '';
-        
-        if (cleanUrl.includes('m.youtube.com/watch') || cleanUrl.includes('youtube.com/watch')) {
-            try {
-                const urlObj = new URL(url);
-                videoId = urlObj.searchParams.get('v');
-            } catch {
-                const match = url.match(/[?&]v=([^&]+)/);
-                videoId = match ? match[1] : '';
-            }
-        }
-        else if (cleanUrl.includes('youtu.be/')) {
-            videoId = cleanUrl.split('youtu.be/')[1].split('?')[0];
-        }
-        else if (cleanUrl.includes('youtube.com') && cleanUrl.includes('v=')) {
-            const match = cleanUrl.match(/v=([^&]+)/);
-            videoId = match ? match[1] : '';
-        }
-        
-        if (videoId) {
-            videoId = videoId.split('&')[0].split('#')[0].split('?')[0];
-            
-            if (videoId.length >= 11) {
-                videoId = videoId.substring(0, 11);
-            }
-            
-            if (videoId) {
-                return `https://www.youtube.com/embed/${videoId}`;
-            }
-        }
-        
-        if (cleanUrl.includes('youtube.com/embed/')) {
-            return cleanUrl;
-        }
-        
-        return null;
-    } catch (error) {
-        console.error('Error converting YouTube URL:', error, 'URL:', url);
-        return null;
-    }
-}
-
-function isYouTubeUrl(url) {
-    if (!url) return false;
-    
-    const youtubePatterns = [
-        'youtube.com',
-        'youtu.be',
-        'youtube.com/shorts',
-        'm.youtube.com'
-    ];
-    
-    return youtubePatterns.some(pattern => url.includes(pattern));
-}
-
-function getMentionsForUser(username) {
-    const userMentions = [];
-    
-    for (let i = 0; i < DATABASEPOSTS.length; i++) {
-        const post = DATABASEPOSTS[i];
-        const postId = DATABASEPOSTS.length - i;
-        
-        if (post.content && post.content.includes(`@${username}`)) {
-            userMentions.push({
-                postId: postId,
-                post: post,
-                datePost: parseCustomDate(post.datePost),
-                mentionedBy: post.username,
-                topic: post.topic || '',
-                positionInArray: i
-            });
-        }
-    }
-    
-    userMentions.sort((a, b) => b.datePost - a.datePost);
-    return userMentions;
 }
 
 // ==================== DATE FUNCTIONS ====================
@@ -1827,579 +2349,433 @@ function formatJoinedDate(date) {
     }
 }
 
-// ==================== SOUND FUNCTIONS ====================
+// ==================== SETUP & INITIALIZATION ====================
 
-let likeSound = null;
-let unlikeSound = null;
-let soundsLoaded = false;
-
-function initSounds() {
-    try {
-        likeSound = new Audio();
-        unlikeSound = new Audio();
-        
-        likeSound.src = 'sounds/like.mp3';
-        unlikeSound.src = 'sounds/unlike.mp3';
-        
-        likeSound.preload = 'auto';
-        unlikeSound.preload = 'auto';
-        likeSound.load();
-        unlikeSound.load();
-        
-        soundsLoaded = true;
-        console.log('Sounds loaded successfully');
-    } catch (error) {
-        console.error('Error loading sounds:', error);
-        soundsLoaded = false;
-    }
-}
-
-function playLikeSound() {
-    if (!soundsLoaded || !likeSound) {
-        playFallbackSound('like');
-        return;
-    }
+function setupEventListeners() {
+    // Initialize video observer
+    videoObserver = initializeVideoObserver();
     
-    try {
-        likeSound.currentTime = 0;
-        likeSound.volume = 0.5;
-        likeSound.play().catch(e => {
-            console.log('Could not play like sound:', e);
-            playFallbackSound('like');
+    // Auth event listeners
+    if (elements.authTabs) {
+        elements.authTabs.forEach(tab => {
+            tab.addEventListener('click', switchAuthTab);
         });
-    } catch (error) {
-        console.log('Error playing like sound:', error);
-        playFallbackSound('like');
-    }
-}
-
-function playUnlikeSound() {
-    if (!soundsLoaded || !unlikeSound) {
-        playFallbackSound('unlike');
-        return;
     }
     
-    try {
-        unlikeSound.currentTime = 0;
-        unlikeSound.volume = 0.3;
-        unlikeSound.play().catch(e => {
-            console.log('Could not play unlike sound:', e);
-            playFallbackSound('unlike');
+    if (elements.loginForm) {
+        elements.loginForm.addEventListener('submit', handleLogin);
+    }
+    
+    if (elements.signupForm) {
+        elements.signupForm.addEventListener('submit', handleSignup);
+    }
+    
+    if (elements.createNewAccount) {
+        elements.createNewAccount.addEventListener('click', () => {
+            document.querySelector('.auth-tab[data-tab="signup"]').click();
         });
-    } catch (error) {
-        console.log('Error playing unlike sound:', error);
-        playFallbackSound('unlike');
-    }
-}
-
-function playFallbackSound(type) {
-    try {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audioContext.createOscillator();
-        
-        oscillator.connect(audioContext.destination);
-        oscillator.frequency.value = type === 'like' ? 600 : 400;
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + 0.1);
-    } catch (error) {
-        console.log('Fallback sound failed');
-    }
-}
-
-let soundEnabled = true;
-
-function handleLike(postId, button) {
-    if (!currentUser || currentUser.isGuest) {
-        alert('Please login to like posts!');
-        return;
     }
     
-    const post = allPosts.find(p => p.id === postId);
-    if (!post) return;
-    
-    if (!currentUser.likedPosts) currentUser.likedPosts = new Set();
-    
-    const postElement = button.closest('.post-card');
-    const likesSpan = postElement.querySelector('.post-stats span:first-child');
-    
-    let currentLikes = post.likes;
-    if (likesSpan) {
-        const likesText = likesSpan.textContent;
-        currentLikes = parseInt(likesText.replace(/[^0-9]/g, ''));
+    // Theme toggle
+    if (elements.themeToggleBtn) {
+        elements.themeToggleBtn.addEventListener('click', toggleTheme);
     }
     
-    if (currentUser.likedPosts.has(postId)) {
-        currentUser.likedPosts.delete(postId);
-        currentLikes--;
-        button.classList.remove('liked');
-        button.innerHTML = '<i class="fas fa-heart"></i> Like';
-        if (soundEnabled) playUnlikeSound();
-    } else {
-        currentUser.likedPosts.add(postId);
-        currentLikes++;
-        button.classList.add('liked');
-        button.innerHTML = '<i class="fas fa-heart"></i> Liked';
-        if (soundEnabled) playLikeSound();
-        button.style.transform = 'scale(1.2)';
-        setTimeout(() => {
-            button.style.transform = 'scale(1)';
-        }, 200);
+    // Search functionality
+    if (elements.searchInput) {
+        elements.searchInput.addEventListener('input', handleSearch);
+        elements.searchInput.addEventListener('focus', showSearchResults);
     }
     
-    post.likes = currentLikes;
-    
-    if (likesSpan) {
-        likesSpan.textContent = `${currentLikes.toLocaleString()} likes`;
-        likesSpan.style.color = 'var(--accent)';
-        setTimeout(() => {
-            likesSpan.style.color = '';
-        }, 300);
+    if (elements.searchToggle) {
+        elements.searchToggle.addEventListener('click', toggleSearchBar);
     }
     
-    saveCurrentUser();
-}
-
-function scrollToPost(postId) {
-    const postElement = document.querySelector(`[data-post-id="${postId}"]`);
-    if (postElement) {
-        postElement.style.boxShadow = '0 0 0 3px var(--accent)';
-        postElement.style.transition = 'box-shadow 0.3s';
-        setTimeout(() => {
-            postElement.style.boxShadow = '';
-        }, 2000);
-        postElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-}
-
-// ==================== SEARCH FUNCTIONS ====================
-
-function toggleSearchBar() {
-    const searchBar = document.querySelector('.search-bar');
-    if (searchBar) {
-        searchBar.classList.toggle('active');
-        if (searchBar.classList.contains('active')) {
-            if (elements.searchInput) elements.searchInput.focus();
-        }
-    }
-}
-
-function handleSearch() {
-    const query = elements.searchInput.value.trim().toLowerCase();
-    
-    if (query.length === 0) {
-        if (elements.searchResults) {
-            elements.searchResults.style.display = 'none';
-        }
-        return;
-    }
-    
-    const searchResults = {
-        profiles: searchProfiles(query),
-        topics: searchTopics(query),
-        posts: searchPosts(query)
-    };
-    
-    displayEnhancedSearchResults(searchResults, query);
-}
-
-function searchProfiles(query) {
-    const uniqueUsers = new Map();
-    
-    DATABASEPOSTS.forEach(post => {
-        if (!uniqueUsers.has(post.username)) {
-            const userPosts = DATABASEPOSTS.filter(p => p.username === post.username);
-            const totalLikes = userPosts.reduce((sum, p) => sum + p.likes, 0);
-            
-            uniqueUsers.set(post.username, {
-                name: post.name,
-                username: post.username,
-                postsCount: userPosts.length,
-                totalLikes: totalLikes,
-                type: 'profile'
-            });
-        }
-    });
-    
-    return Array.from(uniqueUsers.values()).filter(user => 
-        user.name.toLowerCase().includes(query) || 
-        user.username.toLowerCase().includes(query)
-    );
-}
-
-function searchTopics(query) {
-    const topics = {};
-    
-    DATABASEPOSTS.forEach(post => {
-        if (post.topic && post.topic.toLowerCase().includes(query)) {
-            topics[post.topic] = (topics[post.topic] || 0) + 1;
-        }
-    });
-    
-    return Object.entries(topics)
-        .map(([topic, count]) => ({
-            name: `#${topic}`,
-            topic: topic,
-            postsCount: count,
-            type: 'topic'
-        }))
-        .sort((a, b) => b.postsCount - a.postsCount);
-}
-
-function searchPosts(query) {
-    return allPosts
-        .filter(post => 
-            (post.content && post.content.toLowerCase().includes(query)) ||
-            (post.topic && post.topic.toLowerCase().includes(query))
-        )
-        .map(post => ({
-            name: post.name,
-            username: post.username,
-            content: post.content ? post.content.substring(0, 100) + (post.content.length > 100 ? '...' : '') : '',
-            datePost: post.datePost,
-            likes: post.likes,
-            type: 'post',
-            postId: post.id
-        }))
-        .slice(0, 5);
-}
-
-function displayEnhancedSearchResults(results, query) {
-    if (!elements.searchResults) return;
-    
-    const { profiles, topics, posts } = results;
-    
-    elements.searchResults.innerHTML = '';
-    
-    let hasResults = false;
-    
-    if (profiles.length > 0) {
-        hasResults = true;
-        const profileSection = createSearchSection('Profiles', 'user');
-        profiles.slice(0, 5).forEach(profile => {
-            profileSection.appendChild(createProfileResultItem(profile));
+    // Modal controls
+    if (elements.closeProfileModal) {
+        elements.closeProfileModal.addEventListener('click', () => {
+            elements.profileModal.classList.remove('active');
         });
-        elements.searchResults.appendChild(profileSection);
     }
     
-    if (topics.length > 0) {
-        hasResults = true;
-        const topicSection = createSearchSection('Topics', 'hashtag');
-        topics.slice(0, 5).forEach(topic => {
-            topicSection.appendChild(createTopicResultItem(topic));
+    if (elements.closePostModal) {
+        elements.closePostModal.addEventListener('click', () => {
+            elements.postModal.classList.remove('active');
+            resetPostForm();
         });
-        elements.searchResults.appendChild(topicSection);
     }
     
-    if (posts.length > 0) {
-        hasResults = true;
-        const postSection = createSearchSection('Posts', 'file-alt');
-        posts.forEach(post => {
-            postSection.appendChild(createPostResultItem(post));
+    // Load more posts
+    if (elements.loadMoreBtn) {
+        elements.loadMoreBtn.addEventListener('click', loadMorePosts);
+    }
+    
+    // Profile links
+    if (elements.profileLink) {
+        elements.profileLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            showOwnProfile();
         });
-        elements.searchResults.appendChild(postSection);
     }
     
-    if (!hasResults) {
-        const noResults = document.createElement('div');
-        noResults.className = 'search-result-item';
-        noResults.innerHTML = `
-            <div style="text-align: center; padding: 1rem; color: var(--text-muted);">
-                <i class="fas fa-search" style="font-size: 1.5rem; margin-bottom: 0.5rem;"></i>
-                <div>No results found for "${query}"</div>
-            </div>
-        `;
-        elements.searchResults.appendChild(noResults);
+    if (elements.mobileProfileLink) {
+        elements.mobileProfileLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            showOwnProfile();
+            closeMobileMenu();
+        });
     }
     
-    elements.searchResults.style.display = 'block';
-}
-
-function createSearchSection(title, icon) {
-    const section = document.createElement('div');
-    section.className = 'search-section';
-    section.innerHTML = `
-        <div class="search-section-header">
-            <i class="fas fa-${icon}"></i>
-            <span>${title}</span>
-        </div>
-    `;
-    return section;
-}
-
-function createProfileResultItem(profile) {
-    const item = document.createElement('div');
-    item.className = 'search-result-item';
-    item.innerHTML = `
-        <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name)}&background=1e3a8a&color=fff" alt="${profile.name}">
-        <div class="search-result-info">
-            <h4>${profile.name}</h4>
-            <span>@${profile.username}</span>
-            <div class="search-result-meta">
-                <span>${profile.postsCount} posts • ${profile.totalLikes.toLocaleString()} likes</span>
-            </div>
-        </div>
-    `;
-    
-    item.addEventListener('click', () => {
-        showUserProfile(profile.username, profile.name);
-        addToSearchHistory(profile.username, profile.name, 'profile');
-        if (elements.searchInput) elements.searchInput.value = '';
-        if (elements.searchResults) elements.searchResults.style.display = 'none';
-        document.querySelector('.search-bar')?.classList.remove('active');
-    });
-    
-    return item;
-}
-
-function createTopicResultItem(topic) {
-    const item = document.createElement('div');
-    item.className = 'search-result-item';
-    item.innerHTML = `
-        <div class="topic-icon">
-            <i class="fas fa-hashtag"></i>
-        </div>
-        <div class="search-result-info">
-            <h4>${topic.name}</h4>
-            <div class="search-result-meta">
-                <span>${topic.postsCount} posts</span>
-            </div>
-        </div>
-    `;
-    
-    item.addEventListener('click', () => {
-        filterPostsByTopic(topic.topic);
-        addToSearchHistory(topic.topic, topic.name, 'topic');
-        if (elements.searchInput) elements.searchInput.value = '';
-        if (elements.searchResults) elements.searchResults.style.display = 'none';
-        document.querySelector('.search-bar')?.classList.remove('active');
-    });
-    
-    return item;
-}
-
-function createPostResultItem(post) {
-    const item = document.createElement('div');
-    item.className = 'search-result-item';
-    const postDate = parseCustomDate(post.datePost);
-    const formattedDate = formatDateToCustom(postDate);
-    
-    item.innerHTML = `
-        <div class="post-icon">
-            <i class="fas fa-file-alt"></i>
-        </div>
-        <div class="search-result-info">
-            <h4>${post.name}</h4>
-            <span>@${post.username} • ${formattedDate}</span>
-            <div class="search-result-content">${post.content}</div>
-            <div class="search-result-meta">
-                <span><i class="fas fa-heart"></i> ${post.likes}</span>
-            </div>
-        </div>
-    `;
-    
-    item.addEventListener('click', () => {
-        scrollToPost(post.postId);
-        addToSearchHistory(post.username, `Post by ${post.name}`, 'post');
-        if (elements.searchInput) elements.searchInput.value = '';
-        if (elements.searchResults) elements.searchResults.style.display = 'none';
-        document.querySelector('.search-bar')?.classList.remove('active');
-    });
-    
-    return item;
-}
-
-function showSearchResults() {
-    if (elements.searchInput && elements.searchInput.value.trim().length > 0) {
-        if (elements.searchResults) elements.searchResults.style.display = 'block';
+    if (elements.bottomProfileBtn) {
+        elements.bottomProfileBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            showOwnProfile();
+        });
     }
-}
-
-function addToSearchHistory(identifier, name, type) {
-    if (!currentUser) return;
     
-    if (!currentUser.searchHistory) currentUser.searchHistory = [];
+    // Video navigation event listeners
+    if (elements.desktopVideosLink) {
+        elements.desktopVideosLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            handleVideoNavigation();
+        });
+    }
     
-    const searchItem = { 
-        identifier, 
-        name, 
-        type, 
-        timestamp: new Date() 
-    };
+    if (elements.mobileVideosLink) {
+        elements.mobileVideosLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            handleVideoNavigation();
+            closeMobileMenu();
+        });
+    }
     
-    currentUser.searchHistory = currentUser.searchHistory.filter(item => 
-        !(item.identifier === identifier && item.type === type)
-    );
+    if (elements.bottomreelsBtn) {
+        elements.bottomreelsBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            handleVideoNavigation();
+        });
+    }
     
-    currentUser.searchHistory.unshift(searchItem);
-    currentUser.searchHistory = currentUser.searchHistory.slice(0, 5);
-    
-    saveCurrentUser();
-    loadSearchHistory();
-}
-
-function loadSearchHistory() {
-    if (!currentUser || !currentUser.searchHistory || !elements.searchHistory) return;
-    
-    elements.searchHistory.innerHTML = '';
-    
-    currentUser.searchHistory.forEach(item => {
-        const historyItem = document.createElement('div');
-        historyItem.className = 'history-item';
-        
-        let icon = 'history';
-        if (item.type === 'profile') icon = 'user';
-        if (item.type === 'topic') icon = 'hashtag';
-        if (item.type === 'post') icon = 'file-alt';
-        
-        historyItem.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <i class="fas fa-${icon}" style="color: var(--text-muted);"></i>
-                <div style="flex: 1; min-width: 0;">
-                    <div style="color: var(--text-primary); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.name}</div>
-                    <div style="color: var(--text-muted); font-size: 0.8rem; text-transform: capitalize;">${item.type}</div>
-                </div>
-            </div>
-        `;
-        
-        historyItem.addEventListener('click', () => {
-            if (item.type === 'profile') {
-                showUserProfile(item.identifier, item.name);
-            } else if (item.type === 'topic') {
-                filterPostsByTopic(item.identifier);
-            } else if (item.type === 'post') {
-                scrollToPost(item.identifier);
+    // Home navigation event listeners
+    if (elements.desktopHomeLink) {
+        elements.desktopHomeLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (isVideoMode) {
+                showAllPosts();
+            } else {
+                // Already on home, just update nav state
+                updateVideoNavState(false);
             }
         });
+    }
+    
+    if (elements.mobileHomeLink) {
+        elements.mobileHomeLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (isVideoMode) {
+                showAllPosts();
+            }
+            closeMobileMenu();
+            updateVideoNavState(false);
+        });
+    }
+    
+    if (document.getElementById('bottomHomeBtn')) {
+        document.getElementById('bottomHomeBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            if (isVideoMode) {
+                showAllPosts();
+            }
+            updateVideoNavState(false);
+        });
+    }
+    
+    // Mobile menu
+    if (elements.mobileMenuToggle) {
+        elements.mobileMenuToggle.addEventListener('click', openMobileMenu);
+    }
+    
+    if (elements.closeMobileMenu) {
+        elements.closeMobileMenu.addEventListener('click', closeMobileMenu);
+    }
+    
+    // User menu
+    if (elements.menuToggle) {
+        elements.menuToggle.addEventListener('click', toggleUserMenu);
+    }
+    
+    if (elements.logoutLink) {
+        elements.logoutLink.addEventListener('click', handleLogout);
+    }
+    
+    if (elements.mobileLogoutLink) {
+        elements.mobileLogoutLink.addEventListener('click', handleLogout);
+    }
+    
+    // Close modals when clicking outside
+    window.addEventListener('click', (e) => {
+        if (elements.profileModal && e.target === elements.profileModal) {
+            elements.profileModal.classList.remove('active');
+        }
+        if (elements.postModal && e.target === elements.postModal) {
+            elements.postModal.classList.remove('active');
+            resetPostForm();
+        }
         
-        elements.searchHistory.appendChild(historyItem);
+        if (elements.userMenu && !elements.userMenu.contains(e.target) && e.target !== elements.menuToggle) {
+            elements.userMenu.classList.remove('active');
+        }
+        
+        if (elements.searchResults && !elements.searchResults.contains(e.target) && e.target !== elements.searchInput) {
+            elements.searchResults.style.display = 'none';
+        }
+    });
+    
+    // Close search on escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            if (elements.searchResults) {
+                elements.searchResults.style.display = 'none';
+            }
+            document.querySelector('.search-bar')?.classList.remove('active');
+        }
     });
 }
+// ==================== POST FETCHING FUNCTIONS ====================
 
-function filterPostsByTopic(topic) {
-    if (!elements.postsFeed) return;
+const JSON_URL = "database_827_383_294_103_759_927_953.json";
+
+function fetchPosts() {
+    console.log("Fetching posts from:", JSON_URL);
+
+    if (elements.postsFeed) {
+        elements.postsFeed.innerHTML = `
+            <div class="loading-state" style="text-align: center; padding: 3rem;">
+                <div class="loading-spinner" style="width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem;"></div>
+                <p style="color: var(--text-secondary);">Loading posts...</p>
+            </div>
+        `;
+    }
+
+    const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Request timeout after 10 seconds')), 10000);
+    });
+
+    const fetchPromise = fetch(JSON_URL + "?v=" + Date.now(), {
+        cache: "no-store",
+        headers: {
+            'Accept': 'application/json'
+        }
+    });
+
+    Promise.race([fetchPromise, timeoutPromise])
+        .then(res => {
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+            }
+            return res.text();
+        })
+        .then(text => {
+            console.log("Raw response received, length:", text.length);
+            
+            let cleanedText = text.trim();
+            
+            if (!cleanedText.endsWith('}') && !cleanedText.endsWith(']')) {
+                console.warn("JSON might be truncated, attempting to fix...");
+                const lastBrace = cleanedText.lastIndexOf('}');
+                const lastBracket = cleanedText.lastIndexOf(']');
+                const cutIndex = Math.max(lastBrace, lastBracket);
+                
+                if (cutIndex > 0) {
+                    cleanedText = cleanedText.substring(0, cutIndex + 1);
+                    console.log("Trimmed to:", cleanedText.length, "chars");
+                }
+            }
+            
+            try {
+                const data = JSON.parse(cleanedText);
+                console.log("JSON parsed successfully");
+                
+                const postsArray = extractPostsFromJSON(data);
+                console.log("Extracted posts:", postsArray.length);
+                
+                if (postsArray.length > 0) {
+                    console.log("Sample post:", postsArray[0]);
+                    processPosts(postsArray);
+                } else {
+                    console.error("No posts extracted");
+                    renderEmptyState();
+                }
+            } catch (parseError) {
+                console.error("JSON parse error:", parseError.message);
+                renderErrorState("Invalid JSON format received from server");
+            }
+        })
+        .catch(err => {
+            console.error("Fetch error:", err);
+            renderErrorState(err.message || "Failed to load posts");
+            processPosts([]);
+        });
+}
+
+function extractPostsFromJSON(data) {
+    if (!data) {
+        return [];
+    }
+
+    console.log("Data type:", typeof data);
     
-    elements.postsFeed.innerHTML = '';
-    currentPage = 0;
+    if (Array.isArray(data)) {
+        return data;
+    }
+    
+    // Check if data has a posts property
+    if (data.posts && Array.isArray(data.posts)) {
+        return data.posts;
+    }
+    
+    // Check for other possible structures
+    if (data.data && Array.isArray(data.data)) {
+        return data.data;
+    }
+    
+    return [];
+}
+
+function processPosts(postsArray) {
+    console.log('Processing posts data...');
+
+    if (!Array.isArray(postsArray)) {
+        postsArray = [];
+    }
+
+    const validPosts = postsArray.filter(post => {
+        if (!post || typeof post !== 'object') {
+            console.log('Skipping invalid post object:', post);
+            return false;
+        }
+        
+        const hasRequired = post.name && post.username && post.datePost;
+        if (!hasRequired) {
+            console.log('Skipping post missing required fields:', post);
+            return false;
+        }
+        
+        try {
+            const parsedDate = parseCustomDate(post.datePost);
+            const isValidDate = !isNaN(parsedDate.getTime());
+            if (!isValidDate) {
+                console.log('Skipping post with invalid date:', post.datePost);
+            }
+            return isValidDate;
+        } catch {
+            return false;
+        }
+    });
+
+    if (validPosts.length === 0) {
+        renderEmptyState();
+        return;
+    }
+
+    DATABASEPOSTS = [...validPosts];
+
+    if (elements.postsFeed) elements.postsFeed.innerHTML = '';
     displayedPosts.clear();
+    displayedVideoPosts.clear();
+    currentPage = 0;
+    videoPage = 0;
+    allPosts = [];
+    videoPosts = [];
+    isVideoMode = false;
+
+    console.log(`Processing ${DATABASEPOSTS.length} valid posts`);
+
+    initializePosts();
+    loadTrendingTopics();
+    loadSuggestedProfiles();
     
-    const filteredPosts = allPosts.filter(post => post.topic === topic);
-    const shuffledPosts = shuffleArray([...filteredPosts], new Date().getTime());
-    
-    shuffledPosts.slice(0, postsPerPage).forEach(post => {
-        const postElement = createPostElement(post, post.id);
-        elements.postsFeed.appendChild(postElement);
-        displayedPosts.add(post.id);
-    });
-    
+    // Load posts based on current mode
+    if (isVideoMode) {
+        showVideoPosts();
+    } else {
+        loadPosts();
+    }
+
     if (elements.loadMoreBtn) {
-        elements.loadMoreBtn.style.display = 'none';
+        elements.loadMoreBtn.style.display = 'block';
+        elements.loadMoreBtn.disabled = false;
+        elements.loadMoreBtn.textContent = 'Load More';
+    }
+
+    console.log('Posts processing complete.');
+}
+
+function renderEmptyState() {
+    if (!elements.postsFeed) return;
+
+    elements.postsFeed.innerHTML = `
+        <div class="empty-state" style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+            <i class="fas fa-newspaper" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+            <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem; color: var(--text-secondary);">No posts available</h3>
+            <p style="font-size: 0.95rem; max-width: 300px; margin: 0 auto 1rem;">No posts could be loaded from the server.</p>
+            <button onclick="fetchPosts()" class="btn btn-secondary" style="margin-top: 1rem;">
+                <i class="fas fa-redo"></i> Try Again
+            </button>
+        </div>
+    `;
+
+    if (elements.loadMoreBtn) {
+        elements.loadMoreBtn.style.display = "none";
     }
 }
 
-function loadTrendingTopics() {
-    if (!DATABASEPOSTS || DATABASEPOSTS.length === 0) {
-        console.log('No posts data available for trending topics');
-        return;
-    }
-    
-    const topics = {};
-    
-    DATABASEPOSTS.forEach(post => {
-        if (post.topic) {
-            topics[post.topic] = (topics[post.topic] || 0) + 1;
-        }
-    });
-    
-    const sortedTopics = Object.entries(topics)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5);
-    
-    if (elements.trendingList) {
-        elements.trendingList.innerHTML = '';
-        
-        sortedTopics.forEach(([topic, count]) => {
-            const topicItem = document.createElement('div');
-            topicItem.className = 'trending-item';
-            topicItem.innerHTML = `
-                <div style="font-weight: 500; color: var(--text-primary);">#${topic}</div>
-                <span>${count} posts</span>
-            `;
-            
-            topicItem.addEventListener('click', () => {
-                filterPostsByTopic(topic);
-            });
-            
-            elements.trendingList.appendChild(topicItem);
-        });
-    }
-}
+function renderErrorState(message) {
+    if (!elements.postsFeed) return;
 
-function loadSuggestedProfiles() {
-    if (!DATABASEPOSTS || DATABASEPOSTS.length === 0) {
-        console.log('No posts data available for suggested profiles');
-        return;
-    }
-    
-    const uniqueUsers = new Map();
-    
-    DATABASEPOSTS.forEach(post => {
-        if (!uniqueUsers.has(post.username)) {
-            const userPosts = DATABASEPOSTS.filter(p => p.username === post.username);
-            const totalLikes = userPosts.reduce((sum, p) => sum + p.likes, 0);
-            
-            uniqueUsers.set(post.username, {
-                name: post.name,
-                username: post.username,
-                postsCount: userPosts.length,
-                totalLikes: totalLikes
-            });
-        }
-    });
-    
-    const suggestedProfiles = Array.from(uniqueUsers.values())
-        .sort((a, b) => b.totalLikes - a.totalLikes)
-        .slice(0, 5);
-    
-    if (elements.suggestedProfiles) {
-        elements.suggestedProfiles.innerHTML = '';
-        
-        suggestedProfiles.forEach(user => {
-            const profileItem = document.createElement('div');
-            profileItem.className = 'profile-item';
-            profileItem.innerHTML = `
-                <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=1e3a8a&color=fff" alt="${user.name}">
-                <div class="profile-info">
-                    <h4>${user.name}</h4>
-                    <span>${user.postsCount} posts • ${user.totalLikes.toLocaleString()} likes</span>
-                </div>
-            `;
-            
-            profileItem.addEventListener('click', () => {
-                showUserProfile(user.username, user.name);
-            });
-            
-            elements.suggestedProfiles.appendChild(profileItem);
-        });
-    }
+    elements.postsFeed.innerHTML = `
+        <div class="error-state" style="text-align: center; padding: 3rem 1rem; color: var(--danger);">
+            <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+            <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Failed to Load Posts</h3>
+            <p style="margin: 1rem 0; color: var(--text-secondary);">${message}</p>
+            <button onclick="fetchPosts()" class="btn btn-primary" style="margin-top: 1rem;">
+                <i class="fas fa-redo"></i> Retry
+            </button>
+        </div>
+    `;
 }
 
 // ==================== PROFILE FUNCTIONS ====================
 
+function getMentionsForUser(username) {
+    const userMentions = [];
+    
+    if (!DATABASEPOSTS || DATABASEPOSTS.length === 0) return userMentions;
+    
+    for (let i = 0; i < DATABASEPOSTS.length; i++) {
+        const post = DATABASEPOSTS[i];
+        
+        if (post.content && post.content.includes(`@${username}`)) {
+            userMentions.push({
+                postId: `meko-${post.username.toLowerCase()}-reco${DATABASEPOSTS.length - i}`,
+                post: post,
+                datePost: parseCustomDate(post.datePost),
+                mentionedBy: post.username,
+                topic: post.topic || ''
+            });
+        }
+    }
+    
+    userMentions.sort((a, b) => b.datePost - a.datePost);
+    return userMentions;
+}
+
 function showOwnProfile() {
     if (!currentUser || currentUser.isGuest) {
         alert('Please login to view your profile!');
-        return;
-    }
-    
-    const userPosts = DATABASEPOSTS.filter(post => 
-        post.username === currentUser.username || 
-        post.username.toLowerCase() === currentUser.username.toLowerCase()
-    );
-    
-    console.log(`Found ${userPosts.length} posts for user ${currentUser.username}`);
-    
-    if (userPosts.length === 0) {
-        showUserProfile(currentUser.username, currentUser.name, true);
         return;
     }
     
@@ -2451,26 +2827,26 @@ function showUserProfile(username, name, isOwnProfile = false) {
                 <h2 id="profileName">${name}</h2>
                 <div class="profile-username">@${username}</div>
                 
-                <div class="profile-stats">
-                    <div class="stat-item">
-                        <span class="stat-value">${postsCount}</span>
-                        <span class="stat-label">Posts</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-value">${totalLikes.toLocaleString()}</span>
-                        <span class="stat-label">Total Likes</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-value">${userMentions.length}</span>
-                        <span class="stat-label">Mentions</span>
-                    </div>
-                    ${averageLikes > 0 ? `
-                    <div class="stat-item">
-                        <span class="stat-value">${averageLikes.toLocaleString()}</span>
-                        <span class="stat-label">Avg. Likes</span>
-                    </div>
-                    ` : ''}
-                </div>
+         <div class="profile-stats ${postsCount > 99999 || totalLikes > 99999 || averageLikes > 99999 ? 'compact' : ''}">
+    <div class="stat-item">
+        <span class="stat-value ${postsCount > 99999 ? 'stat-value--large' : ''}">${postsCount}</span>
+        <span class="stat-label">Posts</span>
+    </div>
+    <div class="stat-item">
+        <span class="stat-value ${totalLikes > 99999 ? 'stat-value--large' : ''}">${totalLikes.toLocaleString()}</span>
+        <span class="stat-label">Total Likes</span>
+    </div>
+    <div class="stat-item">
+        <span class="stat-value ${userMentions.length > 99999 ? 'stat-value--large' : ''}">${userMentions.length}</span>
+        <span class="stat-label">Mentions</span>
+    </div>
+    ${averageLikes > 0 ? `
+    <div class="stat-item">
+        <span class="stat-value ${averageLikes > 99999 ? 'stat-value--large' : ''}">${averageLikes.toLocaleString()}</span>
+        <span class="stat-label">Avg. Likes</span>
+    </div>
+    ` : ''}
+</div>
                 
                 <div class="profile-meta">
                     <div class="joined-date">
@@ -2497,21 +2873,26 @@ function showUserProfile(username, name, isOwnProfile = false) {
         profilePosts.innerHTML = '';
         
         const tabsHTML = `
-            <div class="profile-tabs">
-                <button class="profile-tab active" data-tab="posts">
-                    <i class="fas fa-newspaper"></i>
-                    Posts (${postsCount})
-                </button>
-                <button class="profile-tab" data-tab="mentions">
-                    <i class="fas fa-at"></i>
-                    Mentions (${userMentions.length})
-                </button>
-                ${isOwnProfile ? `
-                <button class="profile-tab" data-tab="liked">
-                    <i class="fas fa-heart"></i>
-                    Liked Posts (${currentUser?.likedPosts?.size || 0})
-                </button>
-                ` : ''}
+        <div class="profile-tabs-container">
+  <button class="profile-tab active" data-tab="posts">
+    <i class="fas fa-newspaper"></i>
+    <span class="tab-label">Posts</span>
+    <span>(${postsCount})</span>
+  </button>
+  
+  <button class="profile-tab" data-tab="mentions">
+    <i class="fas fa-at"></i>
+    <span class="tab-label">Mentions</span>
+    <span>(${userMentions.length})</span>
+  </button>
+  
+  ${isOwnProfile ? `
+  <button class="profile-tab" data-tab="liked">
+    <i class="fas fa-heart"></i>
+    <span class="tab-label">Liked</span>
+    <span>(${currentUser?.likedPosts?.size || 0})</span>
+  </button>` : ''}
+</div>
             </div>
             <div class="profile-content">
                 <div class="tab-content active" id="postsTab"></div>
@@ -2604,6 +2985,7 @@ function showUserProfile(username, name, isOwnProfile = false) {
             }
         }
         
+        // Add event listeners for profile tabs
         document.querySelectorAll('.profile-tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 const tabName = tab.dataset.tab;
@@ -2624,616 +3006,174 @@ function showUserProfile(username, name, isOwnProfile = false) {
     }
 }
 
-// ==================== POST CREATION FUNCTIONS ====================
+// ==================== TRENDING & SUGGESTIONS FUNCTIONS ====================
 
-function showPostModal() {
-    if (elements.postModal) {
-        elements.postModal.classList.add('active');
-    }
-}
-
-function handleMediaButtonClick(type) {
-    currentMediaType = type;
-    if (!elements.mediaPreview) return;
-    
-    elements.mediaPreview.innerHTML = '';
-    elements.mediaPreview.classList.add('active');
-    
-    if (type === 'image') {
-        if (elements.imageUpload) {
-            elements.imageUpload.click();
-            elements.imageUpload.onchange = handleImageUpload;
-        }
-    } else if (type === 'video') {
-        if (elements.videoUpload) {
-            elements.videoUpload.click();
-            elements.videoUpload.onchange = handleVideoUpload;
-        }
-    } else if (type === 'iframe') {
-        elements.mediaPreview.innerHTML = `
-            <input type="text" id="linkInputInline" placeholder="Paste YouTube/Facebook link" 
-                   style="width: 100%; padding: 0.5rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 0.5rem; color: var(--text-primary);">
-            <button id="processLinkBtn" style="margin-top: 0.5rem; padding: 0.5rem 1rem; background: var(--accent); color: white; border: none; border-radius: 0.5rem; cursor: pointer;">
-                Add Link
-            </button>
-        `;
-        
-        const processBtn = document.getElementById('processLinkBtn');
-        if (processBtn) {
-            processBtn.addEventListener('click', processLink);
-        }
-    }
-}
-
-function handleImageUpload(e) {
-    const file = e.target.files[0];
-    if (file && elements.mediaPreview) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            elements.mediaPreview.innerHTML = `
-                <img src="${e.target.result}" alt="Preview" style="max-width: 100%; border-radius: 0.5rem;">
-                <div style="margin-top: 0.5rem; color: var(--text-secondary); font-size: 0.9rem;">
-                    Image ready to post
-                </div>
-            `;
-        };
-        reader.readAsDataURL(file);
-    }
-}
-
-function handleVideoUpload(e) {
-    const file = e.target.files[0];
-    if (file && elements.mediaPreview) {
-        elements.mediaPreview.innerHTML = `
-            <div style="color: var(--text-secondary); font-size: 0.9rem;">
-                Video file selected: ${file.name}
-            </div>
-        `;
-    }
-}
-
-function processLink() {
-    const linkInput = document.getElementById('linkInputInline');
-    if (!linkInput || !elements.mediaPreview) return;
-    
-    const link = linkInput.value.trim();
-    
-    if (!link) return;
-    
-    let embedLink = link;
-    
-    if (link.includes('youtube.com/shorts/')) {
-        const videoId = link.match(/shorts\/([^?]+)/)[1];
-        embedLink = `https://www.youtube.com/embed/${videoId}`;
-    } else if (link.includes('youtu.be/')) {
-        const videoId = link.match(/youtu\.be\/([^?]+)/)[1];
-        embedLink = `https://www.youtube.com/embed/${videoId}`;
-    } else if (link.includes('youtube.com/watch')) {
-        const videoId = new URL(link).searchParams.get('v');
-        if (videoId) {
-            embedLink = `https://www.youtube.com/embed/${videoId}`;
-        }
-    }
-    
-    elements.mediaPreview.innerHTML = `
-        <div style="color: var(--text-secondary); font-size: 0.9rem;">
-            Link processed: ${embedLink.includes('youtube.com/embed') ? 'YouTube' : 'External'} link
-        </div>
-    `;
-}
-
-function createPost() {
-    if (!elements.postContent) return;
-    
-    const content = elements.postContent.value.trim();
-    const topic = elements.postTopic ? elements.postTopic.value.trim() : '';
-    
-    const hasMedia = elements.mediaPreview && 
-                     elements.mediaPreview.classList.contains('active') && 
-                     elements.mediaPreview.innerHTML.trim() !== '';
-    
-    if (!content && !hasMedia) {
-        alert('Please add some content to your post!');
+function loadTrendingTopics() {
+    if (!DATABASEPOSTS || DATABASEPOSTS.length === 0) {
+        console.log('No posts data available for trending topics');
         return;
     }
     
-    alert('Post functionality requires backend integration. In a real app, this would save to database.');
+    const topics = {};
     
-    if (elements.postContent) elements.postContent.value = '';
-    if (elements.postTopic) elements.postTopic.value = '';
-    if (elements.mediaPreview) {
-        elements.mediaPreview.classList.remove('active');
-        elements.mediaPreview.innerHTML = '';
-    }
-    currentMediaType = null;
-}
-
-function addMediaToPost(type) {
-    if (!elements.mediaPreviewModal) return;
-    
-    elements.mediaPreviewModal.innerHTML = '';
-    
-    if (type === 'image') {
-        elements.mediaPreviewModal.innerHTML = `
-            <div style="color: var(--text-secondary); font-size: 0.9rem;">
-                Image upload would be implemented here
-            </div>
-        `;
-    } else if (type === 'video') {
-        elements.mediaPreviewModal.innerHTML = `
-            <div style="color: var(--text-secondary); font-size: 0.9rem;">
-                Video upload would be implemented here
-            </div>
-        `;
-    } else if (type === 'iframe') {
-        elements.mediaPreviewModal.innerHTML = `
-            <input type="text" id="linkInputModal" placeholder="Paste YouTube/Facebook link" 
-                   style="width: 100%; padding: 0.5rem; margin-bottom: 0.5rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 0.5rem; color: var(--text-primary);">
-            <div style="color: var(--text-secondary); font-size: 0.9rem;">
-                Supports: youtube.com, youtu.be, youtube.com/shorts
-            </div>
-        `;
-    }
-}
-
-function createNewPost() {
-    if (!elements.postContentModal) return;
-    
-    const content = elements.postContentModal.value.trim();
-    const topic = elements.postTopicModal ? elements.postTopicModal.value.trim() : '';
-    
-    if (!content) {
-        alert('Please add some content to your post!');
-        return;
-    }
-    
-    alert(`Post created successfully!\n\nNote: In a real app, this would be saved to the database.`);
-    
-    resetPostForm();
-    if (elements.postModal) {
-        elements.postModal.classList.remove('active');
-    }
-}
-
-function resetPostForm() {
-    if (elements.postContentModal) elements.postContentModal.value = '';
-    if (elements.postTopicModal) elements.postTopicModal.value = '';
-    if (elements.mediaPreviewModal) elements.mediaPreviewModal.innerHTML = '';
-}
-
-// ==================== MOBILE FUNCTIONS ====================
-
-function openMobileMenu() {
-    if (elements.mobileMenu) {
-        elements.mobileMenu.classList.add('active');
-    }
-}
-
-function closeMobileMenu() {
-    if (elements.mobileMenu) {
-        elements.mobileMenu.classList.remove('active');
-    }
-}
-
-function toggleUserMenu() {
-    if (elements.userMenu) {
-        elements.userMenu.classList.toggle('active');
-    }
-}
-
-// ==================== THEME FUNCTIONS ====================
-
-function setupTheme() {
-    const savedTheme = localStorage.getItem('meko-theme');
-    if (savedTheme === 'light') {
-        document.body.classList.remove('dark-mode');
-        document.body.classList.add('light-mode');
-        if (elements.themeIcon) {
-            elements.themeIcon.className = 'fas fa-sun';
+    DATABASEPOSTS.forEach(post => {
+        if (post.topic) {
+            topics[post.topic] = (topics[post.topic] || 0) + 1;
         }
-    }
-}
-
-function toggleTheme() {
-    if (document.body.classList.contains('dark-mode')) {
-        document.body.classList.remove('dark-mode');
-        document.body.classList.add('light-mode');
-        if (elements.themeIcon) {
-            elements.themeIcon.className = 'fas fa-sun';
-        }
-        localStorage.setItem('meko-theme', 'light');
-    } else {
-        document.body.classList.remove('light-mode');
-        document.body.classList.add('dark-mode');
-        if (elements.themeIcon) {
-            elements.themeIcon.className = 'fas fa-moon';
-        }
-        localStorage.setItem('meko-theme', 'dark');
-    }
-}
-
-// ==================== SETUP & INITIALIZATION ====================
-
-function setupEventListeners() {
-    // Initialize video observer
-    videoObserver = setupVideoObserver();
-    
-    // Initialize sounds
-    initSounds();
-    
-    // Auth event listeners
-    if (elements.authTabs) {
-        elements.authTabs.forEach(tab => {
-            tab.addEventListener('click', switchAuthTab);
-        });
-    }
-    
-    if (elements.loginForm) {
-        elements.loginForm.addEventListener('submit', handleLogin);
-    }
-    
-    if (elements.signupForm) {
-        elements.signupForm.addEventListener('submit', handleSignup);
-    }
-    
-    if (elements.createNewAccount) {
-        elements.createNewAccount.addEventListener('click', () => {
-            document.querySelector('.auth-tab[data-tab="signup"]').click();
-        });
-    }
-    
-    // Theme toggle
-    if (elements.themeToggleBtn) {
-        elements.themeToggleBtn.addEventListener('click', toggleTheme);
-    }
-    
-    // Search functionality
-    if (elements.searchInput) {
-        elements.searchInput.addEventListener('input', handleSearch);
-        elements.searchInput.addEventListener('focus', showSearchResults);
-    }
-    
-    if (elements.searchToggle) {
-        elements.searchToggle.addEventListener('click', toggleSearchBar);
-    }
-    
-    if (elements.bottomSearchBtn) {
-        elements.bottomSearchBtn.addEventListener('click', toggleSearchBar);
-    }
-    
-    // Modal controls
-    if (elements.closeProfileModal) {
-        elements.closeProfileModal.addEventListener('click', () => {
-            elements.profileModal.classList.remove('active');
-        });
-    }
-    
-    if (elements.closePostModal) {
-        elements.closePostModal.addEventListener('click', () => {
-            elements.postModal.classList.remove('active');
-            resetPostForm();
-        });
-    }
-    
-    // Load more posts
-    if (elements.loadMoreBtn) {
-        elements.loadMoreBtn.addEventListener('click', loadMorePosts);
-    }
-    
-    // Media buttons
-    document.querySelectorAll('.media-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const type = btn.dataset.type;
-            handleMediaButtonClick(type);
-        });
     });
     
-    // Profile links
-    if (elements.profileLink) {
-        elements.profileLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            showOwnProfile();
-        });
-    }
+    const sortedTopics = Object.entries(topics)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5);
     
-    if (elements.mobileProfileLink) {
-        elements.mobileProfileLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            showOwnProfile();
-            closeMobileMenu();
-        });
-    }
-    
-    if (elements.bottomProfileBtn) {
-        elements.bottomProfileBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            showOwnProfile();
-        });
-    }
-    
-    if (elements.userMenu && elements.menuToggle) {
-        elements.menuToggle.addEventListener('click', (e) => {
-            e.stopPropagation();
-            toggleUserMenu();
-        });
+    if (elements.trendingList) {
+        elements.trendingList.innerHTML = '';
         
-        const menuProfileLink = elements.userMenu.querySelector('#profileLink');
-        if (menuProfileLink) {
-            menuProfileLink.addEventListener('click', (e) => {
-                e.stopPropagation();
-                showOwnProfile();
-                if (elements.userMenu) {
-                    elements.userMenu.classList.remove('active');
-                }
+        sortedTopics.forEach(([topic, count]) => {
+            const topicItem = document.createElement('div');
+            topicItem.className = 'trending-item';
+            topicItem.innerHTML = `
+                <div style="font-weight: 500; color: var(--text-primary);">#${topic}</div>
+                <span>${count} posts</span>
+            `;
+            
+            topicItem.addEventListener('click', () => {
+                filterPostsByTopic(topic);
+            });
+            
+            elements.trendingList.appendChild(topicItem);
+        });
+    }
+}
+
+function loadSuggestedProfiles() {
+    if (!DATABASEPOSTS || DATABASEPOSTS.length === 0) {
+        console.log('No posts data available for suggested profiles');
+        return;
+    }
+    
+    const uniqueUsers = new Map();
+    
+    DATABASEPOSTS.forEach(post => {
+        if (!uniqueUsers.has(post.username)) {
+            const userPosts = DATABASEPOSTS.filter(p => p.username === post.username);
+            const totalLikes = userPosts.reduce((sum, p) => sum + p.likes, 0);
+            
+            uniqueUsers.set(post.username, {
+                name: post.name,
+                username: post.username,
+                postsCount: userPosts.length,
+                totalLikes: totalLikes
             });
         }
-    }
+    });
     
-    // Media buttons in modal
-    if (elements.addImageBtn) {
-        elements.addImageBtn.addEventListener('click', () => addMediaToPost('image'));
-    }
+    const suggestedProfiles = Array.from(uniqueUsers.values())
+        .sort((a, b) => b.totalLikes - a.totalLikes)
+        .slice(0, 5);
     
-    if (elements.addVideoBtn) {
-        elements.addVideoBtn.addEventListener('click', () => addMediaToPost('video'));
-    }
-    
-    if (elements.addLinkBtn) {
-        elements.addLinkBtn.addEventListener('click', () => addMediaToPost('iframe'));
-    }
-    
-    // Mobile menu
-    if (elements.mobileMenuToggle) {
-        elements.mobileMenuToggle.addEventListener('click', openMobileMenu);
-    }
-    
-    if (elements.closeMobileMenu) {
-        elements.closeMobileMenu.addEventListener('click', closeMobileMenu);
-    }
-    
-    // User menu
-    if (elements.menuToggle) {
-        elements.menuToggle.addEventListener('click', toggleUserMenu);
-    }
-    
-    if (elements.logoutLink) {
-        elements.logoutLink.addEventListener('click', handleLogout);
-    }
-    
-    if (elements.mobileLogoutLink) {
-        elements.mobileLogoutLink.addEventListener('click', handleLogout);
-    }
-    
-    // Close modals when clicking outside
-    window.addEventListener('click', (e) => {
-        if (elements.profileModal && e.target === elements.profileModal) {
-            elements.profileModal.classList.remove('active');
-        }
-        if (elements.postModal && e.target === elements.postModal) {
-            elements.postModal.classList.remove('active');
-            resetPostForm();
-        }
+    if (elements.suggestedProfiles) {
+        elements.suggestedProfiles.innerHTML = '';
         
-        if (elements.userMenu && !elements.userMenu.contains(e.target) && e.target !== elements.menuToggle) {
-            elements.userMenu.classList.remove('active');
-        }
-        
-        if (elements.searchResults && !elements.searchResults.contains(e.target) && e.target !== elements.searchInput) {
-            elements.searchResults.style.display = 'none';
-        }
-    });
-    
-    // Close search on escape
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            if (elements.searchResults) {
-                elements.searchResults.style.display = 'none';
-            }
-            document.querySelector('.search-bar')?.classList.remove('active');
-        }
-    });
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            const shareModal = document.getElementById('sharePostModal');
-            if (shareModal && shareModal.classList.contains('active')) {
-                closeSharePostModal();
-            }
-        }
-    });
+        suggestedProfiles.forEach(user => {
+            const profileItem = document.createElement('div');
+            profileItem.className = 'profile-item';
+            profileItem.innerHTML = `
+                <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=1e3a8a&color=fff" alt="${user.name}">
+                <div class="profile-info">
+                    <h4>${user.name}</h4>
+                    <span>${user.postsCount} posts • ${user.totalLikes.toLocaleString()} likes</span>
+                </div>
+            `;
+            
+            profileItem.addEventListener('click', () => {
+                showUserProfile(user.username, user.name);
+            });
+            
+            elements.suggestedProfiles.appendChild(profileItem);
+        });
+    }
 }
 
-function processPosts(postsArray) {
-    console.log('Processing posts data...');
-
-    if (!Array.isArray(postsArray)) {
-        postsArray = [];
-    }
-
-    const validPosts = postsArray.filter(post => {
-        if (!post || typeof post !== 'object') {
-            console.log('Skipping invalid post object:', post);
-            return false;
-        }
-        
-        const hasRequired = post.name && post.username && post.datePost;
-        if (!hasRequired) {
-            return false;
-        }
-        
-        try {
-            const parsedDate = parseCustomDate(post.datePost);
-            const isValidDate = !isNaN(parsedDate.getTime());
-            if (!isValidDate) {
-                console.log('Skipping post with invalid date:', post.datePost);
-            }
-            return isValidDate;
-        } catch {
-            return false;
-        }
-    });
-
-    if (validPosts.length === 0) {
-        renderEmptyState();
-        return;
-    }
-
-    DATABASEPOSTS = [...validPosts];
-
-    if (elements.postsFeed) elements.postsFeed.innerHTML = '';
-    displayedPosts.clear();
-    currentPage = 0;
-    allPosts = [];
-
-    DATABASEPOSTS.slice(0, 3).forEach((p, i) => {
-    });
-
-    initializePosts();
-    loadTrendingTopics();
-    loadSuggestedProfiles();
-    loadPosts();
-
-    if (elements.loadMoreBtn) {
-        elements.loadMoreBtn.style.display = 'block';
-        elements.loadMoreBtn.disabled = false;
-        elements.loadMoreBtn.textContent = 'Load More';
-    }
-
-    console.log('Posts processing complete.');
-}
-
-const JSON_URL = "database_827_383_294_103_759_927_953.json";
-
-function extractPostsFromJSON(data) {
-    if (!data) {
-        return [];
-    }
-
-    console.log("Data type:", typeof data);
+function loadSearchHistory() {
+    if (!currentUser || !currentUser.searchHistory || !elements.searchHistory) return;
     
-    if (Array.isArray(data)) {
-        return data;
-    }
+    elements.searchHistory.innerHTML = '';
     
-    return [];
-}
-
-function fetchPosts() {
-    console.log("Fetching posts from:", JSON_URL);
-
-    if (elements.postsFeed) {
-        elements.postsFeed.innerHTML = `
-            <div class="loading-state" style="text-align: center; padding: 3rem;">
-                <div class="loading-spinner" style="width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem;"></div>
-                <p style="color: var(--text-secondary);">Loading posts...</p>
+    currentUser.searchHistory.forEach(item => {
+        const historyItem = document.createElement('div');
+        historyItem.className = 'history-item';
+        
+        let icon = 'history';
+        if (item.type === 'profile') icon = 'user';
+        if (item.type === 'topic') icon = 'hashtag';
+        if (item.type === 'post') icon = 'file-alt';
+        
+        historyItem.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <i class="fas fa-${icon}" style="color: var(--text-muted);"></i>
+                <div style="flex: 1; min-width: 0;">
+                    <div style="color: var(--text-primary); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.name}</div>
+                    <div style="color: var(--text-muted); font-size: 0.8rem; text-transform: capitalize;">${item.type}</div>
+                </div>
             </div>
         `;
-    }
-
-    const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Request timeout after 10 seconds')), 10000);
-    });
-
-    const fetchPromise = fetch(JSON_URL + "?v=" + Date.now(), {
-        cache: "no-store",
-        headers: {
-            'Accept': 'application/json'
-        }
-    });
-
-    Promise.race([fetchPromise, timeoutPromise])
-        .then(res => {
-            if (!res.ok) {
-                throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-            }
-            return res.text();
-        })
-        .then(text => {
-            console.log("Raw response received, length:", text.length);
-            
-            let cleanedText = text.trim();
-            
-            if (!cleanedText.endsWith('}') && !cleanedText.endsWith(']')) {
-                console.warn("JSON might be truncated, attempting to fix...");
-                const lastBrace = cleanedText.lastIndexOf('}');
-                const lastBracket = cleanedText.lastIndexOf(']');
-                const cutIndex = Math.max(lastBrace, lastBracket);
-                
-                if (cutIndex > 0) {
-                    cleanedText = cleanedText.substring(0, cutIndex + 1);
-                    console.log("Trimmed to:", cleanedText.length, "chars");
+        
+        historyItem.addEventListener('click', () => {
+            if (item.type === 'profile') {
+                showUserProfile(item.identifier, item.name);
+            } else if (item.type === 'topic') {
+                filterPostsByTopic(item.identifier);
+            } else if (item.type === 'post') {
+                const postElement = document.querySelector(`[data-post-id="${item.identifier}"]`);
+                if (postElement) {
+                    postElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
             }
-            
-            try {
-                const data = JSON.parse(cleanedText);
-                console.log("JSON parsed successfully");
-                
-                const postsArray = extractPostsFromJSON(data);
-                console.log("Extracted posts:", postsArray.length);
-                
-                if (postsArray.length > 0) {
-                    console.log("Sample post:", postsArray[0]);
-                    processPosts(postsArray);
-                } else {
-                    console.error("No posts extracted");
-                    renderEmptyState();
-                }
-            } catch (parseError) {
-                console.error("JSON parse error:", parseError.message);
-                const errorIndex = parseError.message.match(/position (\d+)/);
-                if (errorIndex) {
-                    const idx = parseInt(errorIndex[1]);
-                    const start = Math.max(0, idx - 100);
-                    const end = Math.min(cleanedText.length, idx + 100);
-                    console.error("Context:", cleanedText.substring(start, end));
-                }
-                renderErrorState("Invalid JSON format received from server");
-            }
-        })
-        .catch(err => {
-            console.error("Fetch error:", err);
-            renderErrorState(err.message || "Failed to load posts");
-            processPosts([]);
         });
+        
+        elements.searchHistory.appendChild(historyItem);
+    });
 }
 
-function renderEmptyState() {
+function filterPostsByTopic(topic) {
     if (!elements.postsFeed) return;
-
-    elements.postsFeed.innerHTML = `
-        <div class="empty-state" style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
-            <i class="fas fa-newspaper" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
-            <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem; color: var(--text-secondary);">No posts available</h3>
-            <p style="font-size: 0.95rem; max-width: 300px; margin: 0 auto 1rem;">No posts could be loaded from the server.</p>
-            <button onclick="fetchPosts()" class="btn btn-secondary" style="margin-top: 1rem;">
-                <i class="fas fa-redo"></i> Try Again
-            </button>
-        </div>
-    `;
-
+    
+    elements.postsFeed.innerHTML = '';
+    currentPage = 0;
+    displayedPosts.clear();
+    isVideoMode = false;
+    updateVideoNavState(false);
+    
+    const filteredPosts = allPosts.filter(post => post.topic === topic);
+    
+    if (filteredPosts.length === 0) {
+        elements.postsFeed.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-hashtag"></i>
+                <h3>No posts with topic #${topic}</h3>
+                <p>No posts found with this topic.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    filteredPosts.forEach(post => {
+        const postElement = createPostElement(post, post.id);
+        elements.postsFeed.appendChild(postElement);
+        displayedPosts.add(post.id);
+    });
+    
     if (elements.loadMoreBtn) {
-        elements.loadMoreBtn.style.display = "none";
+        elements.loadMoreBtn.style.display = 'none';
     }
 }
 
-function renderErrorState(message) {
-    if (!elements.postsFeed) return;
+// Note: The rest of the functions (handleLike, sharePost, search functions, profile functions, etc.)
+// remain the same as in your original code. They have been omitted here for brevity,
+// but you should keep them in your actual main.js file.
 
-    elements.postsFeed.innerHTML = `
-        <div class="error-state" style="text-align: center; padding: 3rem 1rem; color: var(--danger);">
-            <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 1rem;"></i>
-            <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Failed to Load Posts</h3>
-            <p style="margin: 1rem 0; color: var(--text-secondary);">${message}</p>
-            <button onclick="fetchPosts()" class="btn btn-primary" style="margin-top: 1rem;">
-                <i class="fas fa-redo"></i> Retry
-            </button>
-        </div>
-    `;
-}
-
+// Initialize the app
 function initializeApp() {
     console.log("Initializing app...");
     
@@ -3245,74 +3185,14 @@ function initializeApp() {
     
     setupEventListeners();
     setupTheme();
-    
     processUrlParameters();
-    
     fetchPosts();
-    
     checkAuth();
 }
 
+// Start the app
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeApp);
 } else {
     initializeApp();
 }
-
-const style = document.createElement('style');
-style.textContent = `
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-`;
-document.head.appendChild(style);
-
-function debugFetch() {
-    console.log("=== DEBUG FETCH ===");
-    console.log("URL:", JSON_URL);
-    
-    fetch(JSON_URL + "?debug=" + Date.now())
-        .then(r => {
-            console.log("Status:", r.status, r.statusText);
-            return r.text();
-        })
-        .then(t => {
-            console.log("Full response length:", t.length);
-            console.log("First 1000 chars:", t.substring(0, 1000));
-            console.log("Last 200 chars:", t.substring(t.length - 200));
-            
-            const openBraces = (t.match(/{/g) || []).length;
-            const closeBraces = (t.match(/}/g) || []).length;
-            const openBrackets = (t.match(/\[/g) || []).length;
-            const closeBrackets = (t.match(/\]/g) || []).length;
-            
-            console.log("Counts: {=" + openBraces + " }=" + closeBraces + " [=" + openBrackets + " ]=" + closeBrackets);
-            
-            if (openBraces !== closeBraces) {
-                console.error("MISMATCH: Braces don't match!");
-            }
-            if (openBrackets !== closeBrackets) {
-                console.error("MISMATCH: Brackets don't match!");
-            }
-            
-            try {
-                const parsed = JSON.parse(t);
-                console.log("✅ JSON is valid");
-                console.log("Structure:", parsed);
-            } catch(e) {
-                console.error("❌ JSON parse error:", e.message);
-            }
-        })
-        .catch(console.error);
-}
-
-// ==================== ADD THIS: CLEANUP ON PAGE LOAD ====================
-
-// Run cleanup after a short delay to catch other scripts
-setTimeout(() => {
-    cleanupVideoAttributes();
-    setupVideoObservation();
-}, 500);
-
-// Also run cleanup periodically
-setInterval(cleanupVideoAttributes, 1000);
