@@ -275,7 +275,7 @@ function addShareButtonToPost(postElement, postId) {
 // ==================== SHARE FUNCTIONS ====================
 
 function sharePost(postId) {
-    const post = allPosts.find(p => p.id === postId);
+    const post = DATABASEPOSTS.find(p => p.id === postId);
     if (!post) {
         alert('Post not found');
         return;
@@ -485,7 +485,7 @@ function processUrlParameters() {
 }
 
 function showSharedPostModal(postId) {
-    const post = allPosts.find(p => p.id === postId);
+    const post = DATABASEPOSTS.find(p => p.id === postId);
     if (!post) {
         console.log('Post not found:', postId);
         return;
@@ -1340,6 +1340,7 @@ function shuffleArrayRandomly(array) {
 /**
  * Show only video posts
  */
+ 
 function showVideoPosts() {
     isVideoMode = true;
     videoPosts = extractVideoPosts();
@@ -1349,8 +1350,10 @@ function showVideoPosts() {
     
     // Assign unique IDs to video posts
     videoPosts.forEach((post, index) => {
-        post.videoId = `video-${post.id || `vid-${index}-${Date.now()}`}`;
-    });
+    // Only assign videoId if you need it for DOM element reference
+    post.videoId = post.id || `vid-${index}-${Date.now()}`;
+});
+  
     
     if (elements.postsFeed) {
         elements.postsFeed.innerHTML = '';
