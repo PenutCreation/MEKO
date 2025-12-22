@@ -451,39 +451,39 @@ function shareToPlatform(platform, url, post) {
 }
 
 function generateShareUrl(postId) {
-    const baseUrl = window.location.origin + window.location.pathname;
-    return `${baseUrl}?share=${postId}`;
+    const base = location.origin + location.pathname;
+    const encoded = encodeURIComponent(`/post/orgin/${postId}/content`);
+    return `${base}?share=${encoded}`;
 }
 
 // ==================== URL PARAMETER FUNCTIONS ====================
-
 function processUrlParameters() {
     const urlParams = new URLSearchParams(window.location.search);
-    const shareParam = urlParams.get('share');
-    
-    if (shareParam) {
-        sharedPostId = shareParam.trim();
-        console.log('Found shared post ID in URL:', sharedPostId);
-        
-        // Wait for posts to load
-        const checkInterval = setInterval(() => {
-            if (allPosts.length > 0) {
-                clearInterval(checkInterval);
-                showSharedPostModal(sharedPostId);
-                
-                // Clean URL without refreshing page
-                if (window.history.replaceState) {
-                    const newUrl = window.location.pathname;
-                    window.history.replaceState(null, '', newUrl);
-                }
-            }
-        }, 100);
-        
-        // Timeout after 5 seconds
-        setTimeout(() => clearInterval(checkInterval), 5000);
-    }
-}
+    const share = urlParams.get("share");
+    if (!share) return;
 
+    const decoded = decodeURIComponent(share);
+    // decoded = "/post/orgin/ABC123/content"
+
+    const parts = decoded.split('/').filter(Boolean);
+    // ["post", "orgin", "ABC123", "content"]
+
+    const postId = parts[2]; // ✅ correct index
+
+    console.log("Found shared post ID:", postId);
+
+    const checkInterval = setInterval(() => {
+        if (allPosts.length > 0) {
+            clearInterval(checkInterval);
+            showSharedPostModal(postId);
+
+            // Clean URL
+            history.replaceState(null, '', window.location.pathname);
+        }
+    }, 100);
+
+    setTimeout(() => clearInterval(checkInterval), 5000);
+}
 function showSharedPostModal(postId) {
     const post = DATABASEPOSTS.find(p => p.id === postId);
     if (!post) {
@@ -1315,25 +1315,29 @@ function extractVideoPosts() {
 /**
  * Shuffle array without seed (true random)
  */
-function shuffleArrayRandomly(array) {
+ function shuffleArrayRandomly(array) {
     const shuffled = [...array];
-    
-    // Use cryptographically secure random if available
-    if (window.crypto && window.crypto.getRandomValues) {
-        for (let i = shuffled.length - 1; i > 0; i--) {
-            const randomBuffer = new Uint32Array(1);
-            window.crypto.getRandomValues(randomBuffer);
-            const j = randomBuffer[0] % (i + 1);
-            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    const n = shuffled.length;
+
+    for (let i = n - 1; i > 0; i--) {
+        let j;
+        if (window.crypto && window.crypto.getRandomValues) {
+            // Generate a random number in [0, i] without modulo bias
+            const range = i + 1;
+            let max = 0xffffffff;
+            let x;
+            do {
+                const randomBuffer = new Uint32Array(1);
+                window.crypto.getRandomValues(randomBuffer);
+                x = randomBuffer[0];
+            } while (x >= max - (max % range)); // avoid bias
+            j = x % range;
+        } else {
+            j = Math.floor(Math.random() * (i + 1));
         }
-    } else {
-        // Fallback to Math.random
-        for (let i = shuffled.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-        }
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
-    
+
     return shuffled;
 }
 
