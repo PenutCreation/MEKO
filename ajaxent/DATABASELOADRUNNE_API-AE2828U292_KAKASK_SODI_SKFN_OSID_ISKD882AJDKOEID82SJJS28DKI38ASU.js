@@ -1,7 +1,7 @@
 // main.js
 // Global variables
 let currentUser = null;
-let postsPerPage = 7;
+let postsPerPage = 1;
 let currentPage = 0;
 let currentMediaType = null;
 let allPosts = [];
@@ -1223,10 +1223,50 @@ class CustomVideoPlayer {
         this.playerContainer.addEventListener('mouseleave', () => this.hideControls());
         
         // Touch events for mobile
-        this.playerContainer.addEventListener('touchstart', () => this.showControls());
-        this.playerContainer.addEventListener('touchend', () => {
-            setTimeout(() => this.hideControls(), 3000);
-        });
+      // state
+this.longPressTimer = null;
+this.longPressTriggered = false;
+this.touchStartY = 0;
+this.touchStartX = 0;
+this.isScrolling = false;
+
+// touch start
+this.playerContainer.addEventListener("touchstart", (e) => {
+    const t = e.touches[0];
+    this.touchStartY = t.clientY;
+    this.touchStartX = t.clientX;
+    this.isScrolling = false;
+    this.longPressTriggered = false;
+
+    this.longPressTimer = setTimeout(() => {
+        this.longPressTriggered = true;
+        this.onLongPress(); // 👈 YOUR "right-click" logic
+    }, 450); // ms = long press threshold
+}, { passive: true });
+
+// touch move (detect scroll)
+this.playerContainer.addEventListener("touchmove", (e) => {
+    const t = e.touches[0];
+    const dy = Math.abs(t.clientY - this.touchStartY);
+    const dx = Math.abs(t.clientX - this.touchStartX);
+
+    if (dy > 10 || dx > 10) {
+        this.isScrolling = true;
+        clearTimeout(this.longPressTimer);
+    }
+}, { passive: true });
+
+// touch end
+this.playerContainer.addEventListener("touchend", () => {
+    clearTimeout(this.longPressTimer);
+
+    if (this.isScrolling) return;
+
+    // short tap
+    if (!this.longPressTriggered) {
+        this.toggleControls();
+    }
+});
     }
     
     onPlay() {
@@ -1503,6 +1543,7 @@ function setupVideoObserver() {
 /**
  * Render media content with custom video player
  */
+ 
 function renderMediaContent(post, postId) {
     if (post.iframe) {
         return `<div class="post-media"><iframe class="post-iframe" src="${post.iframe}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;
@@ -1572,9 +1613,9 @@ function extractVideoPosts() {
         }
         
         // Check for video file extensions in any media field
-        if (post.image || post.media) {
-            const mediaUrl = (post.image || post.media || '').toLowerCase();
-            return mediaUrl.match(/\.(mp4|webm|ogg|mov|avi|wmv|flv|mkv|m4v)$/);
+        if (post.image || post.video) {
+            const videoUrl = (post.video || post.video || '').toLowerCase();
+            return videoUrl.match(/\.(mp4|webm|ogg|mov|avi|wmv|flv|mkv|m4v)$/);
         }
         
         return false;
@@ -1741,7 +1782,7 @@ function showVideoPosts() {
         
         elements.loadMoreBtn.disabled = !hasMorePosts;
         elements.loadMoreBtn.textContent = hasMorePosts ? 
-            `Load More Videos (${remainingVideos} remaining)` : 
+            `Load More Videos` : 
             'No more videos';
         
         if (!hasMorePosts) {
@@ -2545,10 +2586,10 @@ const isAnyAd = adType !== null;
                 <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(userDisplayName)}&background=${isAnyAd ? '4a5568' : '1e3a8a'}&color=fff">  
                 <div class="user-info">  
                     <h3>${userDisplayName} ${isAnyAd ? '<span class="ad-badge">Ad</span>' : ''}</h3>  
-                    <span>${userDisplayUsername}</span>  
+                    <span>${userDisplayUsername} • ${formattedDate}</span>  
                 </div>  
             </div>  
-            <div class="post-date">${formattedDate}</div>  
+
             ${isVideoPost ? '<div class="video-indicator"><i class="fas fa-video"></i> Video</div>' : ''}
         </div>  
         
@@ -2743,28 +2784,44 @@ function parseCustomDate(dateString) {
         return new Date();
     }
 }
-
 function formatDateToCustom(date) {
     try {
-        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        const month = months[date.getMonth()];
-        const day = date.getDate();
-        const year = date.getFullYear();
-        
-        let hours = date.getHours();
-        const minutes = date.getMinutes().toString().padStart(2, '0');
-        const ampm = hours >= 12 ? 'PM' : 'AM';
-        
-        hours = hours % 12;
-        hours = hours ? hours : 12;
-        
-        return `${month} ${day} ${year} ${hours}:${minutes}${ampm}`;
+        const now = new Date();
+        const diffMs = now - date; // difference in milliseconds
+
+        const diffSeconds = Math.floor(diffMs / 1000);
+        const diffMinutes = Math.floor(diffSeconds / 60);
+        const diffHours = Math.floor(diffMinutes / 60);
+
+        // ================= RECENT TIME =================
+        if (diffSeconds < 10) {
+            return "Just now";
+        }
+
+        if (diffSeconds < 60) {
+            return `${diffSeconds} sec${diffSeconds !== 1 ? "s" : ""}`;
+        }
+
+        if (diffMinutes < 60) {
+            return `${diffMinutes} min${diffMinutes !== 1 ? "s" : ""}`;
+        }
+
+        // ================= HOURS (UP TO 10) =================
+        if (diffHours <= 10) {
+            return `${diffHours} hr${diffHours !== 1 ? "s" : ""}`;
+        }
+
+        // ================= REAL DATE (11+ HOURS) =================
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+        return `${months[date.getMonth()]} ${date.getDate()} ${date.getFullYear()}`;
+
     } catch (error) {
-        console.error('Error formatting date:', date, error);
-        return 'Invalid Date';
+        console.error("Error formatting date:", error);
+        return "Invalid Date";
     }
 }
-
 function formatJoinedDate(date) {
     try {
         const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -3642,4 +3699,3 @@ if (document.readyState === 'loading') {
 } else {
     initializeApp();
 }
-
