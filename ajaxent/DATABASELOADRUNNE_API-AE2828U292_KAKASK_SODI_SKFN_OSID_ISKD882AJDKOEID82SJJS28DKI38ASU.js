@@ -1,7 +1,7 @@
 // main.js
 // Global variables
 let currentUser = null;
-let postsPerPage = 1;
+let postsPerPage = 5;
 let currentPage = 0;
 let currentMediaType = null;
 let allPosts = [];
