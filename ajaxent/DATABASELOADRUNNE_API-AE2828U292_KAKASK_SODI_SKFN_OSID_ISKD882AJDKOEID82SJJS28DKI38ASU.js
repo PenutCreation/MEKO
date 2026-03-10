@@ -1661,53 +1661,7 @@ function extractVideoPosts() {
     // ... rest of your showVideoPosts function ...
 
 function showVideoPosts() {
-    isVideoMode = true;
-    videoPosts = extractVideoPosts();
-    resetPagination();
-    console.log(`Found ${videoPosts.length} video posts`);
-    
-    if (videoPosts.length === 0) {
-        alert('No video posts found!');
-        return;
-    }
-    
-    // Shuffle video posts randomly
-    videoPosts = shuffleArrayRandomly(videoPosts);
-    
-    // Assign unique IDs to video posts
-    videoPosts.forEach((post, index) => {
-        post.videoId = post.id || `vid-${index}-${Date.now()}`;
-    });
-    
-    if (elements.postsFeed) {
-        elements.postsFeed.innerHTML = '';
-        videoPage = 0;
-        displayedVideoPosts.clear();
-        
-        // Show video-specific header
-        const videoHeader = document.createElement('div');
-        videoHeader.className = 'video-section-header';
-        videoHeader.innerHTML = `
-            <div style="text-align: center; padding: 1.5rem; border-bottom: 1px solid var(--border); margin-bottom: 1rem;">
-                <i class="fas fa-film" style="font-size: 2rem; color: var(--accent); margin-bottom: 0.5rem;"></i>
-                <h2 style="margin-bottom: 0.5rem; color: var(--text-primary);">Video Posts</h2>
-                <p style="color: var(--text-secondary);">${videoPosts.length} video posts available</p>
-                <button class="btn btn-secondary" onclick="showAllPosts()" style="margin-top: 0.5rem; padding: 0.5rem 1rem;">
-                    <i class="fas fa-arrow-left"></i> Back to All Posts
-                </button>
-            </div>
-        `;
-        elements.postsFeed.appendChild(videoHeader);
-        
-        // Load initial video posts
-        loadVideoPosts();
-    }
-    
-    // Update navigation active states
-    updateVideoNavState(true);
-    
-    // Scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+   window.location.href = "reel.html" 
 }
 /**
  * Load more video posts
