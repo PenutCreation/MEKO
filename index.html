@@ -1,6 +1,12 @@
+
+  <!-- ===================== -->
+  <!-- index.html conmected to main.js-->
+  <!-- ===================== -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
   <meta name="google-site-verification" content="mfL7X8QV4uvLoRzVLHX_bXLtEiLdTanYXOCpEotxO7Q" />
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -328,10 +334,27 @@
       <div class="search-container">
         <div class="search-bar">
           <i class="fas fa-search"></i>
-          <input type="text" id="searchInput" placeholder="Search profiles, topics, or posts...">
-          <div class="search-results" id="searchResults">
-            <!-- Search results will appear here -->
-          </div>
+<!-- Search Bar -->
+<div class="search-bar">
+    <div class="search-container">
+        <i class="fas fa-search"></i>
+        <input 
+            type="text" 
+            id="searchInput" 
+            placeholder="Search users, topics, posts..."
+            autocomplete="off"
+            spellcheck="false"
+        >
+        <button class="clear-search" id="clearSearchBtn" style="display: none;">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <!-- Search Results Dropdown -->
+    <div class="search-results" id="searchResults">
+        <!-- Search results will be dynamically inserted here -->
+    </div>
+</div>
         </div>
         <button class="btn-icon search-toggle" id="searchToggle">
           <i class="fas fa-search"></i>
@@ -486,7 +509,7 @@
       <div class="feed-container">
         
         <!-- Create Post Box -->
-        <div class="create-post-box" id="createPostBox">
+        <div Hidden class="create-post-box" id="createPostBox">
           <!-- Hidden FormSubmit form ALT:https://formsubmit.co/el/sikoha -->
           <form id="postForm" action="https://formsubmit.co/1eddd910abee4e2cee742c1eed9d99e9" method="POST" 
                 target="hiddenFrame" style="display: none;">
@@ -714,8 +737,12 @@
           const postVideoObserver = new IntersectionObserver(videoObserverCallback, videoObserverOptions);
         </script>
 
-        <script id="valid-287329eXkskDUU28DJEI28eu93Usjasaeeaesy#7AeEaIUO8iajdskIk#8#-----PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxMTEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RXJyb3IgbG9hZGluZyB2aWRlbzwvdGV4dD48L3N2Zz4=PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxMTEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RXJyb3IgbG9hZGluZyB2aWRlbzwvdGV4dD48L3N2Zz4=PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxMTEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RXJyb3IgbG9hZGluZyB2aWRlbzwvdGV4dD48L3N2Zz4="src="ajaxent/DATABASELOADRUNNE_API-AE2828U292_KAKASK_SODI_SKFN_OSID_ISKD882AJDKOEID82SJJS28DKI38ASU.js"></script>
+
+
+<script id="valid-287329eXkskDUU28DJEI28eu93Usjasaeeaesy#7AeEaIUO8iajdskIk#8#-----PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxMTEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RXJyb3IgbG9hZGluZyB2aWRlbzwvdGV4dD48L3N2Zz4=PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxMTEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RXJyb3IgbG9hZGluZyB2aWRlbzwvdGV4dD48L3N2Zz4=PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxMTEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RXJyb3IgbG9hZGluZyB2aWRlbzwvdGV4dD48L3N2Zz4="src="ajaxent/DATABASELOADRUNNE_API-AE2828U292_KAKASK_SODI_SKFN_OSID_ISKD882AJDKOEID82SJJS28DKI38ASU.js"></script>
         <script id="valid-287329eXkskDUU28DJEI28eu93Usjasaeeaesy#7AeEaIUO8iajdskIk#8#-----PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxMTEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+RXJyb3IgbG9hZGluZyB2aWRlbzwvdGV4dD48L3N2Zz4=PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxMTEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWtkbGUiIGR5PSIuM2VtIj5FcnJvciBsb2FkaW5nIHZpZGVvPC90ZXh0Pjwvc3ZnPg=" src="post_EeoDei29dk29dk.js"></script>
+      
+    
       </div>
     </div>
   </div>
