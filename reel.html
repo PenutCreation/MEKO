@@ -1,1205 +1,1676 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Meko Reels</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link rel="canonical" href="https://penutcreation.github.io/MEKO/">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>MekoNetwork — Videos</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 
-<!-- ===================== -->
-<!-- Open Graph (Facebook, Messenger, Instagram) -->
-<!-- ===================== -->
-<meta property="og:site_name" content="MekoNetwork">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://penutcreation.github.io/MEKO/">
-
-<meta property="og:title" content="MekoNetwork — A Safe Haven Social Media">
-<meta property="og:description" content="Share posts and videos, react freely, connect with others, and support communities in a safe social space.">
-
-<meta property="og:image" content="https://penutcreation.github.io/MEKO/og-image.jpg">
-<meta property="og:image:secure_url"
-content="https://penutcreation.github.io/MEKO/og-image.jpg">
-<meta property="og:image:type" content="image/jpeg">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-
-<!-- ===================== -->
-<!-- Twitter / X -->
-<!-- ===================== -->
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="MekoNetwork — A Safe Haven Social Media">
-<meta name="twitter:description" content="A safe social media platform to share videos, react, and support people around the world.">
-<meta name="twitter:image" content="https://penutcreation.github.io/MEKO/og-image.jpg">
-
-<!-- Optional branding -->
-<meta name="twitter:site" content="@MekoNetwork">
-<meta name="twitter:creator" content="@MekoNetwork">
-
-<!-- ===================== -->
-<!-- Mobile / App Sharing Optimization -->
-<!-- ===================== -->
-<meta name="theme-color" content="#0f172a">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <style>
-      * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-}
-
-:root {
-    --bg-primary: #000000;
-    --bg-secondary: #111111;
-    --text-primary: #ffffff;
-    --text-secondary: rgba(255, 255, 255, 0.7);
-    --text-tertiary: rgba(255, 255, 255, 0.5);
-    --accent: #1a56db;
-    --accent-light: #3b82f6;
-    --like-color: #ef4444;
-    --border-color: rgba(255, 255, 255, 0.1);
-    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    --transition-base: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 16px;
-    --radius-full: 9999px;
-}
-
-body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    line-height: 1.5;
-    overflow-x: hidden;
-    min-height: 100vh;
-    min-height: 100dvh;
-    position: relative;
-}
-
-/* Typography Scale */
-h1, h2, h3, h4, .username {
-    font-weight: 600;
-    letter-spacing: -0.01em;
-}
-
-p, .video-caption {
-    font-weight: 400;
-    letter-spacing: -0.01em;
-}
-
-/* Main Container - Enhanced Scroll */
-.reels-container {
-    position: relative;
-    height: 100vh;
-    height: 100dvh;
-    width: 100%;
-    overflow-y: auto;
-    scroll-snap-type: y mandatory;
-    scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-}
-
-.reels-container::-webkit-scrollbar {
-    display: none;
-}
-
-/* Individual Reel */
-.reel {
-    position: relative;
-    min-height: 100vh;
-    min-height: 100dvh;
-    width: 100%;
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
-    background: var(--bg-primary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    isolation: isolate;
-}
-
-/* Video Container */
-/* Video Container */
-.video-wrapper {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--bg-primary);
-    z-index: 1;
-}
-
-/* Video Player - Responsive */
-.reel-video {
-    position: relative;
-    max-width: 100%;
-    max-height: 100%;
-    width: auto;
-    height: auto;
-    background: var(--bg-primary);
-    will-change: transform;
-    backface-visibility: hidden;
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
-    
-    /* Center the video */
-    display: block;
-    margin: auto;
-}
-
-/* YouTube/Embedded Videos */
-.youtube-video {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border: none;
-    background: var(--bg-primary);
-}
-
-/* For portrait videos (9:16 aspect ratio) */
-.video-wrapper.portrait .reel-video {
-    width: 100%;
-    height: auto;
-    max-height: 100vh;
-    max-height: 100dvh;
-}
-
-/* For landscape videos (16:9 aspect ratio) */
-.video-wrapper.landscape .reel-video {
-    height: 100%;
-    width: auto;
-    max-width: 100vw;
-}
-
-/* For square videos (1:1 aspect ratio) */
-.video-wrapper.square .reel-video {
-    width: auto;
-    height: auto;
-    max-width: 100%;
-    max-height: 100%;
-}
-/* Overlay Container */
-.video-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 10;
-    pointer-events: none;
-    display: flex;
-    flex-direction: column;
-    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-}
-
-/* Top Section */
-.top-section {
-    padding: clamp(12px, 3vh, 24px);
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    flex-shrink: 0;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 100%);
-}
-
-.back-btn {
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: var(--text-primary);
-    width: 44px;
-    height: 44px;
-    border-radius: var(--radius-full);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    cursor: pointer;
-    pointer-events: auto;
-    transition: var(--transition-base);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    box-shadow: var(--card-shadow);
-}
-
-.back-btn:hover,
-.back-btn:focus-visible {
-    background: rgba(0, 0, 0, 0.6);
-    transform: translateY(-1px);
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-}
-
-.back-btn:active {
-    transform: scale(0.95);
-}
-
-/* Bottom Section */
-.bottom-section {
-    margin-top: auto;
-    display: flex;
-    padding: clamp(16px, 4vh, 24px);
-    gap: clamp(16px, 4vw, 24px);
-    align-items: flex-end;
-    background: linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 100%);
-}
-
-/* Video Info */
-.video-info {
-    flex: 1;
-    pointer-events: auto;
-    min-width: 0; /* Prevents flex overflow */
-}
-
-.username {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-size: clamp(16px, 1.8vw, 18px);
-    margin-bottom: 8px;
-    color: var(--text-primary);
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
-}
-
-.video-caption {
-    font-size: clamp(14px, 1.6vw, 15px);
-    line-height: 1.5;
-    margin-bottom: 12px;
-    max-height: 4.5em;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    color: var(--text-secondary);
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
-margin-bottom:50px;
-}
-
-.topic-tag {
-    display: inline-block;
-    font-weight: 500;
-    color: var(--accent-light);
-    font-size: clamp(13px, 1.4vw, 14px);
-    text-decoration: none;
-    transition: var(--transition-base);
-    padding: 4px 8px;
-    border-radius: var(--radius-sm);
-    background: rgba(59, 130, 246, 0.1);
-margin-bottom:50px;
-}
-
-.topic-tag:hover,
-.topic-tag:focus-visible {
-    background: rgba(59, 130, 246, 0.2);
-    outline: none;
-}
-
-/* Actions Section */
-.reel-actions {
-    display: flex;
-    flex-direction: column;
-    gap: clamp(20px, 5vh, 28px);
-    align-items: center;
-    pointer-events: auto;
-    flex-shrink: 0;
-    margin-bottom:50px;
-}
-
-.action-btn {
-    background: transparent;
-    border: none;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    cursor: pointer;
-    transition: var(--transition-base);
-    padding: 8px;
-    border-radius: var(--radius-sm);
-}
-
-.action-btn:hover,
-.action-btn:focus-visible {
-    transform: translateY(-2px);
-    background: rgba(255, 255, 255, 0.05);
-    outline: none;
-}
-
-.action-btn:active {
-    transform: scale(0.92);
-}
-
-.action-icon {
-    width: clamp(48px, 6vw, 56px);
-    height: clamp(48px, 6vw, 56px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: clamp(24px, 3vw, 28px);
-    color: var(--text-primary);
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: var(--radius-full);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    transition: var(--transition-base);
-}
-
-.action-count {
-    font-size: clamp(12px, 1.2vw, 13px);
-    font-weight: 500;
-    color: var(--text-primary);
-    min-width: 40px;
-    text-align: center;
-    opacity: 0.9;
-}
-
-.like-btn.liked .action-icon {
-    color: var(--like-color);
-    background: rgba(239, 68, 68, 0.15);
-    border-color: rgba(239, 68, 68, 0.3);
-    animation: heartBeat 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-}
-
-@keyframes heartBeat {
-    0%, 100% { transform: scale(1); }
-    15% { transform: scale(1.3); }
-    30% { transform: scale(1.1); }
-    45% { transform: scale(1.25); }
-}
-
-/* Avatar */
-.avatar-btn {
-    width: clamp(48px, 6vw, 56px);
-    height: clamp(48px, 6vw, 56px);
-    border-radius: var(--radius-full);
-    border: 2px solid rgba(255, 255, 255, 0.9);
-    overflow: hidden;
-    position: relative;
-    cursor: pointer;
-    background: linear-gradient(135deg, var(--accent), var(--accent-light));
-    transition: var(--transition-base);
-    flex-shrink: 0;
-}
-
-.avatar-btn:hover,
-.avatar-btn:focus-visible {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
-    outline: none;
-}
-
-.avatar-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
-
-/* Bottom Navigation */
-.bottom-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background: rgba(10, 10, 10, 0.95);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border-top: 1px solid var(--border-color);
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    padding: 12px 0;
-    z-index: 1000;
-    min-height: 10px;
-}
-
-.nav-btn {
-    background: transparent;
-    border: none;
-    color: var(--text-secondary);
-    font-size: clamp(22px, 2.5vw, 24px);
-    cursor: pointer;
-    transition: var(--transition-base);
-    padding: 8px 12px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    border-radius: var(--radius-md);
-    min-width: 60px;
-    position: relative;
-    overflow: hidden;
-}
-
-.nav-btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: currentColor;
-    opacity: 0;
-    transition: var(--transition-base);
-}
-
-.nav-btn:hover,
-.nav-btn:focus-visible {
-    color: var(--text-primary);
-    transform: translateY(-1px);
-    outline: none;
-}
-
-.nav-btn.active {
-    color: var(--text-primary);
-}
-
-.nav-btn.active::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 4px;
-    height: 4px;
-    border-radius: var(--radius-full);
-    background: var(--accent);
-}
-
-.nav-label {
-    font-size: clamp(10px, 1vw, 11px);
-    font-weight: 500;
-    letter-spacing: 0.02em;
-    color: inherit;
-}
-
-/* Loading Indicator */
-.loading-indicator {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 2000;
-    display: none;
-}
-
-.loader {
-    width: 48px;
-    height: 48px;
-    border: 3px solid rgba(255, 255, 255, 0.1);
-    border-top-color: var(--accent);
-    border-radius: var(--radius-full);
-    animation: spin 1s cubic-bezier(0.76, 0.35, 0.2, 0.88) infinite;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
-/* Empty/Error States */
-.empty-state,
-.error-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    min-height: 100dvh;
-    text-align: center;
-    padding: 32px;
-    background: var(--bg-primary);
-    gap: 24px;
-}
-
-.empty-state i,
-.error-state i {
-    font-size: clamp(64px, 10vw, 80px);
-    color: var(--text-tertiary);
-    opacity: 0.5;
-}
-
-.empty-state h3,
-.error-state h3 {
-    font-size: clamp(20px, 2.5vw, 24px);
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.empty-state p,
-.error-state p {
-    color: var(--text-secondary);
-    font-size: clamp(15px, 1.8vw, 16px);
-    max-width: 400px;
-    line-height: 1.6;
-}
-
-.retry-btn {
-    background: var(--accent);
-    color: white;
-    border: none;
-    padding: clamp(12px, 2vh, 16px) clamp(32px, 4vw, 40px);
-    border-radius: var(--radius-md);
-    font-size: clamp(15px, 1.6vw, 16px);
-    font-weight: 600;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    transition: var(--transition-base);
-    box-shadow: 0 4px 12px rgba(26, 86, 219, 0.3);
-}
-
-.retry-btn:hover,
-.retry-btn:focus-visible {
-    background: var(--accent-light);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
-    outline: none;
-}
-
-.retry-btn:active {
-    transform: translateY(0);
-}
-
-/* Double Tap Heart */
-.double-tap-heart {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: clamp(80px, 15vw, 120px);
-    color: var(--like-color);
-    opacity: 0;
-    z-index: 100;
-    pointer-events: none;
-    animation: heartFloat 1.2s cubic-bezier(0.17, 0.67, 0.83, 0.67);
-    filter: drop-shadow(0 8px 24px rgba(239, 68, 68, 0.4));
-}
-
-@keyframes heartFloat {
-    0% {
-        opacity: 0;
-        transform: translate(-50%, -50%) scale(0.2);
-    }
-    20% {
-        opacity: 1;
-        transform: translate(-50%, -60%) scale(1.1);
-    }
-    40% {
-        opacity: 1;
-        transform: translate(-50%, -70%) scale(1);
-    }
-    100% {
-        opacity: 0;
-        transform: translate(-50%, -100%) scale(0.8);
-    }
-}
-
-/* Responsive Design */
-@media (min-width: 480px) {
-    .reel-video {
-        object-fit: contain;
-    }
-}
-
-/* Tablet */
-@media (min-width: 768px) {
-    .reels-container {
-        max-width: 500px;
-        margin: 0 auto;
-        box-shadow: 0 0 60px rgba(0, 0, 0, 0.8);
-        border-radius: 0;
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --surface: #111111;
+      --glass: rgba(255,255,255,0.06);
+      --glass-border: rgba(255,255,255,0.1);
+      --accent: #3b82f6;
+      --accent2: #ec4899;
+      --text: #ffffff;
+      --text-sub: rgba(255,255,255,0.6);
+      --text-dim: rgba(255,255,255,0.35);
+      --danger: #ef4444;
+      --sidebar-w: 72px;
+      --right-w: 80px;
     }
 
-    .bottom-nav {
-        max-width: 500px;
-        left: 50%;
-        transform: translateX(-50%);
-        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-        border-top: none;
-        border-left: 1px solid var(--border-color);
-        border-right: 1px solid var(--border-color);
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    html, body {
+      width: 100%; height: 100%;
+      background: var(--bg);
+      font-family: 'DM Sans', sans-serif;
+      overflow: hidden;
+      overscroll-behavior: none;
     }
 
-    .video-overlay {
-        padding: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left));
-    }
-}
-
-/* Desktop */
-@media (min-width: 1024px) {
-    .reels-container {
-        max-width: 420px;
-        margin: 24px auto;
-        border-radius: var(--radius-lg);
-        overflow: hidden;
-height: calc(100vh - 48px);
-        height: calc(100dvh - 48px);
+    /* ===== LAYOUT ===== */
+    #app {
+      display: flex;
+      width: 100%; height: 100dvh;
+      position: relative;
     }
 
-    .reel {
-        border-radius: var(--radius-lg);
+    /* ===== LEFT SIDEBAR ===== */
+    .sidebar {
+      width: var(--sidebar-w);
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1.5rem 0;
+      gap: 0.5rem;
+      z-index: 50;
+      background: linear-gradient(to right, rgba(0,0,0,0.85), transparent);
+      position: relative;
     }
 
-    .bottom-nav {
-        max-width: 420px;
-        bottom: 24px;
-        border-radius: var(--radius-full);
-        padding: 5px 7px;
-        border: 1px solid var(--border-color);
+    .logo-mini {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 0.75rem;
+      color: var(--accent);
+      letter-spacing: 0.05em;
+      text-align: center;
+      line-height: 1.1;
+      margin-bottom: 1.5rem;
+      writing-mode: vertical-lr;
+      transform: rotate(180deg);
+      opacity: 0.9;
     }
 
     .nav-btn {
-        flex-direction: row;
-        gap: 8px;
-        min-width: auto;
-        padding: 5px 7px;
+      width: 48px; height: 48px;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: var(--text-sub);
+      background: transparent;
+      border: none;
+      font-size: 1.2rem;
+      text-decoration: none;
+      position: relative;
     }
 
-    .nav-label {
-        font-size: 13px;
-    }
-}
+    .nav-btn:hover { background: var(--glass); color: var(--text); }
+    .nav-btn.active { color: var(--accent); background: rgba(59,130,246,0.12); }
 
-/* Large Desktop */
-@media (min-width: 1440px) {
-    .reels-container {
-        max-width: 450px;
+    .nav-btn .tooltip {
+      position: absolute;
+      left: calc(100% + 12px);
+      background: rgba(0,0,0,0.9);
+      color: white;
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: 6px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .nav-btn:hover .tooltip { opacity: 1; }
+
+    .sidebar-spacer { flex: 1; }
+
+    /* ===== FEED ===== */
+    #feed {
+      flex: 1;
+      height: 100%;
+      overflow-y: scroll;
+      scroll-snap-type: y mandatory;
+      scroll-behavior: smooth;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    #feed::-webkit-scrollbar { display: none; }
+
+    /* ===== VIDEO CARD ===== */
+    .reel-card {
+      width: 100%;
+      height: 100dvh;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background: #000;
     }
 
-    .bottom-nav {
-        max-width: 450px;
-    }
-}
-
-/* High DPI Screens */
-@media (min-resolution: 192dpi) {
-    .back-btn,
-    .action-icon,
-    .avatar-btn {
-        border-width: 0.5px;
-    }
-}
-
-/* Reduced Motion */
-@media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-    }
-    
-    .reels-container {
-        scroll-behavior: auto;
-    }
-}
-
-/* Dark Mode Compatibility */
-@media (prefers-color-scheme: light) {
-    :root {
-        --bg-primary: #ffffff;
-        --bg-secondary: #f5f5f5;
-        --text-primary: #000000;
-        --text-secondary: rgba(0, 0, 0, 0.7);
-        --text-tertiary: rgba(0, 0, 0, 0.5);
-        --border-color: rgba(0, 0, 0, 0.1);
-    }
-}
-
-/* Touch Device Optimizations */
-@media (hover: none) and (pointer: coarse) {
-    .action-btn:hover,
-    .back-btn:hover,
-    .nav-btn:hover,
-    .avatar-btn:hover,
-    .retry-btn:hover,
-    .topic-tag:hover {
-        transform: none;
-    }
-    
-    .action-btn:active,
-    .back-btn:active,
-    .nav-btn:active,
-    .avatar-btn:active,
-    .retry-btn:active {
-        transform: scale(0.95);
-    }
-}
-
-/* Portrait Orientation */
-@media (orientation: portrait) {
     .reel-video {
-        object-fit: cover;
+      position: absolute;
+      inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      z-index: 1;
+      pointer-events: none;
     }
-}
 
-/* Landscape Orientation */
-@media (orientation: landscape) and (max-height: 600px) {
-    .top-section {
-        padding: 8px;
+    /* iframe (YouTube etc) */
+    .reel-iframe-wrap {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
     }
-    
-    .bottom-section {
-        padding: 12px;
+    .reel-iframe-wrap iframe {
+      width: 100%; height: 100%;
+      border: none;
+      pointer-events: none;
     }
-    
-    .action-icon {
-        width: 40px;
-        height: 40px;
-        font-size: 20px;
+
+    /* ===== GRADIENTS ===== */
+    .reel-gradient-top {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 180px;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent);
+      z-index: 5;
+      pointer-events: none;
     }
-    
-    .avatar-btn {
-        width: 40px;
-        height: 40px;
+
+    .reel-gradient-bottom {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 320px;
+      background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 50%, transparent 100%);
+      z-index: 5;
+      pointer-events: none;
     }
-}
-    </style>
+
+    /* ===== PAUSE OVERLAY ===== */
+    .pause-icon {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      z-index: 20;
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.6);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem;
+      color: white;
+      pointer-events: none;
+      transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s;
+      opacity: 0;
+    }
+    .pause-icon.show {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+    }
+
+    /* ===== SPEED BADGE ===== */
+    .speed-badge {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%) scale(0.8);
+      z-index: 20;
+      background: rgba(0,0,0,0.75);
+      color: white;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 1.5rem;
+      padding: 0.75rem 1.5rem;
+      border-radius: 50px;
+      pointer-events: none;
+      opacity: 0;
+      transition: all 0.2s;
+    }
+    .speed-badge.show {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    /* ===== BOTTOM INFO ===== */
+    .reel-info {
+      position: absolute;
+      bottom: 0; left: 0;
+      width: calc(100% - var(--right-w));
+      padding: 1.5rem 1.25rem 2rem;
+      z-index: 10;
+    }
+
+    .reel-user {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+      cursor: pointer;
+    }
+
+    .reel-avatar {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.4);
+      object-fit: cover;
+      transition: border-color 0.2s;
+    }
+    .reel-user:hover .reel-avatar { border-color: var(--accent); }
+
+    .reel-user-name {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: white;
+    }
+    .reel-user-handle {
+      font-size: 0.78rem;
+      color: var(--text-sub);
+    }
+
+    .reel-caption {
+      font-size: 0.88rem;
+      color: rgba(255,255,255,0.9);
+      line-height: 1.4;
+      max-width: 100%;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .reel-caption.expanded {
+      -webkit-line-clamp: unset;
+    }
+
+    .reel-caption .mention {
+      color: var(--accent);
+      cursor: pointer;
+    }
+
+    .reel-topic {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin-top: 0.5rem;
+      font-size: 0.78rem;
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    .read-more-btn {
+      background: none;
+      border: none;
+      color: var(--text-sub);
+      font-size: 0.82rem;
+      cursor: pointer;
+      margin-top: 0.25rem;
+      padding: 0;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    /* ===== RIGHT ACTIONS ===== */
+    .reel-actions {
+      position: absolute;
+      right: 0;
+      bottom: 80px;
+      width: var(--right-w);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+      padding-bottom: 1rem;
+      z-index: 10;
+    }
+
+    .action-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+
+    .action-circle {
+      width: 46px; height: 46px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.15rem;
+      color: white;
+      transition: all 0.2s;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .action-item:hover .action-circle,
+    .action-item:active .action-circle {
+      background: rgba(255,255,255,0.2);
+      transform: scale(1.1);
+    }
+
+    .action-item.liked .action-circle {
+      background: rgba(236,72,153,0.25);
+      color: #ec4899;
+      border-color: rgba(236,72,153,0.4);
+    }
+
+    .action-circle.like-btn-circle {
+      font-size: 1.3rem;
+    }
+
+    .action-label {
+      font-size: 0.7rem;
+      color: rgba(255,255,255,0.75);
+      font-weight: 500;
+    }
+
+    /* Like animation */
+    @keyframes heartPop {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.4); }
+      100% { transform: scale(1); }
+    }
+    .heart-pop { animation: heartPop 0.3s ease; }
+
+    /* ===== PROGRESS BAR ===== */
+    .reel-progress {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 3px;
+      background: rgba(255,255,255,0.15);
+      z-index: 15;
+    }
+    .reel-progress-fill {
+      height: 100%;
+      background: var(--accent);
+      width: 0%;
+      transition: width 0.1s linear;
+    }
+
+    /* ===== TOP BAR ===== */
+    .reel-topbar {
+      position: fixed;
+      top: 0; left: var(--sidebar-w); right: 0;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1.25rem;
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    .topbar-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: white;
+      text-shadow: 0 1px 8px rgba(0,0,0,0.5);
+      pointer-events: all;
+    }
+
+    .topbar-pill {
+      display: flex;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 50px;
+      overflow: hidden;
+      pointer-events: all;
+    }
+
+    .topbar-tab {
+      padding: 0.4rem 1rem;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--text-sub);
+      cursor: pointer;
+      transition: all 0.2s;
+      background: none;
+      border: none;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .topbar-tab.active {
+      background: white;
+      color: #000;
+      border-radius: 50px;
+    }
+
+    /* ===== LOADING STATE ===== */
+    .reel-card.loading-card {
+      background: #111;
+    }
+    .reel-loading-inner {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 1rem; color: var(--text-sub);
+      font-size: 0.9rem;
+    }
+    .spinner-ring {
+      width: 48px; height: 48px;
+      border: 3px solid rgba(255,255,255,0.1);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== EMPTY STATE ===== */
+    .reel-empty {
+      height: 100dvh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 1rem; color: var(--text-sub);
+      text-align: center; padding: 2rem;
+    }
+    .reel-empty i { font-size: 3rem; opacity: 0.4; }
+    .reel-empty h3 { font-family: 'Syne', sans-serif; color: white; font-size: 1.3rem; }
+
+    /* ===== PROFILE MODAL (reuse from main) ===== */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 200;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+
+    .profile-sheet {
+      width: 100%; max-width: 520px;
+      max-height: 85dvh;
+      background: #161616;
+      border-radius: 20px 20px 0 0;
+      overflow: hidden;
+      display: flex; flex-direction: column;
+      animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .sheet-handle {
+      width: 40px; height: 4px;
+      border-radius: 2px;
+      background: rgba(255,255,255,0.2);
+      margin: 0.75rem auto 0;
+    }
+
+    .sheet-header {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.25rem 0.5rem;
+    }
+    .sheet-header h3 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700; font-size: 1.1rem; color: white;
+    }
+    .sheet-close {
+      background: rgba(255,255,255,0.08);
+      border: none; color: white;
+      width: 32px; height: 32px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 1rem;
+      transition: background 0.2s;
+    }
+    .sheet-close:hover { background: rgba(255,255,255,0.15); }
+
+    .sheet-body {
+      overflow-y: auto; padding: 1rem 1.25rem 2rem;
+      flex: 1;
+    }
+    .sheet-body::-webkit-scrollbar { display: none; }
+
+    .profile-hero {
+      display: flex; flex-direction: column;
+      align-items: center; text-align: center; gap: 0.5rem;
+      padding: 1rem 0;
+    }
+    .profile-hero-avatar {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      border: 3px solid var(--accent);
+    }
+    .profile-hero-name {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700; font-size: 1.2rem; color: white;
+    }
+    .profile-hero-handle { font-size: 0.85rem; color: var(--text-sub); }
+
+    .profile-stats-row {
+      display: flex; gap: 1rem;
+      justify-content: center; margin: 1rem 0;
+    }
+    .stat-box {
+      flex: 1;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      padding: 0.75rem 0.5rem;
+      text-align: center;
+    }
+    .stat-box-val {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700; font-size: 1.1rem; color: white;
+    }
+    .stat-box-label { font-size: 0.72rem; color: var(--text-dim); margin-top: 2px; }
+
+    .profile-posts-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; margin-top: 0.5rem;
+    }
+    .profile-thumb {
+      aspect-ratio: 1;
+      border-radius: 4px;
+      overflow: hidden;
+      background: #222;
+      position: relative;
+    }
+    .profile-thumb img {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    .profile-thumb-video {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.3);
+      color: white; font-size: 1.2rem;
+    }
+
+    /* ===== SHARE MODAL ===== */
+    .share-sheet {
+      width: 100%; max-width: 480px;
+      background: #161616;
+      border-radius: 20px 20px 0 0;
+      padding: 0 0 2rem;
+      animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .share-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700; font-size: 1rem; color: white;
+      padding: 0.75rem 1.25rem 1rem;
+    }
+    .share-link-row {
+      display: flex; gap: 0.5rem;
+      padding: 0 1.25rem 1rem;
+    }
+    .share-link-input {
+      flex: 1;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 0.6rem 0.9rem;
+      color: white; font-size: 0.82rem;
+      font-family: 'DM Sans', sans-serif;
+      outline: none;
+    }
+    .share-copy-btn {
+      background: var(--accent);
+      border: none;
+      border-radius: 10px;
+      color: white; padding: 0.6rem 1rem;
+      font-size: 0.82rem; font-weight: 600;
+      cursor: pointer; transition: background 0.2s;
+      white-space: nowrap;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .share-copy-btn:hover { background: #2563eb; }
+    .share-copy-btn.copied { background: #16a34a; }
+
+    .share-platforms {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem; padding: 0 1.25rem;
+    }
+    .platform-item {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 0.4rem;
+      cursor: pointer; padding: 0.75rem 0.5rem;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      transition: all 0.2s;
+    }
+    .platform-item:hover { background: rgba(255,255,255,0.08); transform: translateY(-2px); }
+    .platform-item i { font-size: 1.4rem; }
+    .platform-item span { font-size: 0.7rem; color: var(--text-sub); }
+    .platform-item.wa i { color: #25d366; }
+    .platform-item.fb i { color: #1877f2; }
+    .platform-item.tw i { color: #1da1f2; }
+    .platform-item.tg i { color: #0088cc; }
+
+    /* ===== MUTE INDICATOR ===== */
+    .mute-indicator {
+      position: fixed;
+      top: 70px; right: 1rem;
+      z-index: 60;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 50px;
+      padding: 6px 14px 6px 10px;
+      display: flex; align-items: center; gap: 6px;
+      color: white; font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .mute-indicator:hover { background: rgba(0,0,0,0.85); }
+    .mute-indicator i { font-size: 0.9rem; }
+
+    /* ===== MOBILE BOTTOM NAV ===== */
+    .mobile-bottom-nav {
+      display: none;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 60px;
+      background: rgba(0,0,0,0.9);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid rgba(255,255,255,0.06);
+      z-index: 100;
+      align-items: center;
+      justify-content: space-around;
+    }
+    .mob-nav-btn {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 3px;
+      color: rgba(255,255,255,0.45);
+      font-size: 1.1rem; text-decoration: none;
+      transition: color 0.2s;
+      cursor: pointer;
+      background: none; border: none;
+    }
+    .mob-nav-btn span { font-size: 0.62rem; font-weight: 500; }
+    .mob-nav-btn.active { color: white; }
+    .mob-nav-btn.videos-active { color: var(--accent); }
+
+    /* ===== DOUBLE TAP HEART ===== */
+    .dt-heart {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      font-size: 5rem;
+      z-index: 30;
+      pointer-events: none;
+      animation: dtHeartAnim 0.8s forwards;
+    }
+    @keyframes dtHeartAnim {
+      0% { transform: translate(-50%,-50%) scale(0); opacity: 1; }
+      40% { transform: translate(-50%,-50%) scale(1.3); opacity: 1; }
+      100% { transform: translate(-50%,-50%) scale(1.6); opacity: 0; }
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .reel-topbar { left: 0; }
+      .mobile-bottom-nav { display: flex; }
+      #feed { padding-bottom: 60px; }
+      .reel-info { width: calc(100% - 72px); }
+      :root { --right-w: 72px; }
+    }
+
+    @media (min-width: 769px) and (max-width: 1100px) {
+      :root { --sidebar-w: 60px; }
+    }
+
+    /* ===== SWIPE HINT ===== */
+    .swipe-hint {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex; flex-direction: column;
+      align-items: center; gap: 4px;
+      z-index: 50;
+      color: rgba(255,255,255,0.5);
+      font-size: 0.72rem;
+      animation: hintFade 3s forwards 1.5s;
+      pointer-events: none;
+    }
+    .swipe-hint i { font-size: 1.2rem; animation: bounce 1s infinite; }
+    @keyframes bounce {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+    @keyframes hintFade {
+      0% { opacity: 1; }
+      70% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+  </style>
 </head>
 <body>
-    <!-- Loading Indicator -->
-    <div class="loading-indicator" id="loadingIndicator">
-        <div class="loader"></div>
-    </div>
+<div id="app">
 
-    <!-- Reels Container -->
-    <div class="reels-container" id="reelsContainer">
-        <!-- Reels will be dynamically inserted here -->
-    </div>
+  <!-- Left Sidebar (desktop) -->
+  <aside class="sidebar">
+    <span class="logo-mini">MEKO<br>NET</span>
 
-    <!-- Bottom Navigation -->
-    <div class="bottom-nav">
-        <button class="nav-btn active">
-            <i class="fas fa-play"></i>
-        </button>
-        <button class="nav-btn" onclick="window.location.href='index.html'">
-            <i class="fas fa-home"></i>
-        </button>
-    </div>
+    <a href="index.html" class="nav-btn" title="Home">
+      <i class="fas fa-home"></i>
+      <span class="tooltip">Home</span>
+    </a>
 
-    <script>
-   // ==================== CONFIGURATION ====================
+    <button class="nav-btn active" title="Videos">
+      <i class="fas fa-film"></i>
+      <span class="tooltip">Videos</span>
+    </button>
+
+    <button class="nav-btn" id="sb-profile-btn" title="Profile">
+      <i class="fas fa-user"></i>
+      <span class="tooltip">Profile</span>
+    </button>
+
+    <div class="sidebar-spacer"></div>
+
+    <button class="nav-btn" id="sb-mute-btn" title="Mute/Unmute">
+      <i class="fas fa-volume-up" id="sb-mute-icon"></i>
+      <span class="tooltip">Mute</span>
+    </button>
+
+    <button class="nav-btn" id="sb-logout-btn" title="Logout">
+      <i class="fas fa-sign-out-alt"></i>
+      <span class="tooltip">Logout</span>
+    </button>
+  </aside>
+
+  <!-- Main Feed -->
+  <div id="feed">
+    <div class="reel-card loading-card" id="loading-card">
+      <div class="reel-loading-inner">
+        <div class="spinner-ring"></div>
+        <span>Loading videos...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top bar -->
+  <div class="reel-topbar">
+    <div class="topbar-title">Videos</div>
+    <div class="topbar-pill">
+      <button class="topbar-tab active" id="tab-for-you">For You</button>
+      <button class="topbar-tab" id="tab-following">Trending</button>
+    </div>
+  </div>
+
+  <!-- Mute indicator (mobile) -->
+  <div class="mute-indicator" id="mute-indicator" style="display:none;">
+    <i class="fas fa-volume-mute" id="mute-ind-icon"></i>
+    <span id="mute-ind-text">Muted</span>
+  </div>
+
+  <!-- Swipe hint -->
+  <div class="swipe-hint" id="swipe-hint">
+    <i class="fas fa-chevron-up"></i>
+    <span>Swipe up</span>
+  </div>
+
+  <!-- Mobile Bottom Nav -->
+  <nav class="mobile-bottom-nav">
+    <a href="index.html" class="mob-nav-btn">
+      <i class="fas fa-home"></i><span>Home</span>
+    </a>
+    <button class="mob-nav-btn videos-active">
+      <i class="fas fa-film"></i><span>Videos</span>
+    </button>
+    <button class="mob-nav-btn" id="mob-profile-btn">
+      <i class="fas fa-user"></i><span>Profile</span>
+    </button>
+  </nav>
+</div>
+
+<!-- Profile Sheet -->
+<div class="modal-overlay" id="profile-overlay">
+  <div class="profile-sheet" id="profile-sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <h3 id="sheet-username">Profile</h3>
+      <button class="sheet-close" id="close-profile-sheet"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="sheet-body" id="profile-sheet-body">
+      <!-- filled dynamically -->
+    </div>
+  </div>
+</div>
+
+<!-- Share Sheet -->
+<div class="modal-overlay" id="share-overlay">
+  <div class="share-sheet" id="share-sheet">
+    <div class="sheet-handle"></div>
+    <div class="share-title"><i class="fas fa-share-alt" style="margin-right:8px;color:var(--accent)"></i>Share Video</div>
+    <div class="share-link-row">
+      <input type="text" class="share-link-input" id="share-link-input" readonly>
+      <button class="share-copy-btn" id="share-copy-btn">Copy</button>
+    </div>
+    <div class="share-platforms">
+      <div class="platform-item wa" data-platform="whatsapp">
+        <i class="fab fa-whatsapp"></i><span>WhatsApp</span>
+      </div>
+      <div class="platform-item fb" data-platform="facebook">
+        <i class="fab fa-facebook"></i><span>Facebook</span>
+      </div>
+      <div class="platform-item tw" data-platform="twitter">
+        <i class="fab fa-twitter"></i><span>Twitter</span>
+      </div>
+      <div class="platform-item tg" data-platform="telegram">
+        <i class="fab fa-telegram"></i><span>Telegram</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===================== CONFIG =====================
 const JSON_URL = "database_827_383_294_103_759_927_953.json";
+const CURRENT_USER_KEY = 'meko-current-user';
+const USERS_KEY = 'meko-registered-users';
+
+// ===================== STATE =====================
 let DATABASEPOSTS = [];
-let VIDEO_POSTS = [];
-let currentVideoIndex = 0;
+let videoPosts = [];
+let currentIndex = 0;
+let isMuted = false;
 let currentUser = null;
+let isLongPress = false;
+let longPressTimer = null;
+let activeVideoEl = null;
+let renderedIndices = new Set();
 let isLoading = false;
+let currentSharePostId = null;
+let sortMode = 'random'; // 'random' | 'trending'
 
-// ==================== DOM ELEMENTS ====================
-const elements = {
-    reelsContainer: document.getElementById('reelsContainer'),
-    loadingIndicator: document.getElementById('loadingIndicator')
-};
-
-// ==================== SECURE VIDEO TOKEN ====================
-function generateSecureVideoToken(videoUrl, postId) {
-    const payload = JSON.stringify({
-        src: videoUrl,
-        pid: postId,
-        exp: Date.now() + (1000 * 60 * 10) // 10 min expiry
-    });
-    return btoa(payload.split('').reverse().join(''));
-}
-
-function decodeSecureVideoToken(token) {
-    try {
-        const decoded = atob(token).split('').reverse().join('');
-        const data = JSON.parse(decoded);
-        if (Date.now() > data.exp) return null;
-        return data.src;
-    } catch {
-        return null;
-    }
-}
-
-function hydrateSecureVideo(video) {
-    if (video.dataset.loaded) return;
-    const url = decodeSecureVideoToken(video.dataset.src);
-    if (url) {
-        video.src = url;
-        video.load();
-        video.dataset.loaded = "1";
-    }
-}
-
-// ==================== INITIALIZATION ====================
-function initApp() {
-    loadCurrentUser();
-    fetchPosts();
-    setupScrollObserver();
-}
-
+// ===================== USER AUTH =====================
 function loadCurrentUser() {
-    const savedUser = localStorage.getItem('meko-current-user');
-    if (savedUser) {
-        try {
-            currentUser = JSON.parse(savedUser);
-            if (!currentUser.likedPosts) currentUser.likedPosts = [];
-        } catch {
-            currentUser = null;
-        }
-    }
-}
-
-// ==================== FETCH POSTS ====================
-async function fetchPosts() {
-    if (isLoading) return;
-    showLoading(true);
-    isLoading = true;
-
-    try {
-        const response = await fetch(JSON_URL + "?v=" + Date.now(), {
-            cache: "no-store",
-            headers: { 'Accept': 'application/json' }
-        });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        let cleanedText = (await response.text()).trim();
-
-        // Fix incomplete JSON
-        if (!cleanedText.endsWith('}') && !cleanedText.endsWith(']')) {
-            const lastBrace = cleanedText.lastIndexOf('}');
-            const lastBracket = cleanedText.lastIndexOf(']');
-            const cutIndex = Math.max(lastBrace, lastBracket);
-            if (cutIndex > 0) cleanedText = cleanedText.substring(0, cutIndex + 1);
-        }
-
-        const data = JSON.parse(cleanedText);
-        const postsArray = Array.isArray(data) ? data : [];
-
-        DATABASEPOSTS = postsArray.filter(post => post && post.name && post.username && post.datePost);
-
-        DATABASEPOSTS.forEach((post, index) => {
-            const recoNumber = DATABASEPOSTS.length - index;
-            post.id = `meko-${post.username.toLowerCase()}-reco${recoNumber}`;
-            post.recoNumber = recoNumber;
-        });
-
-        VIDEO_POSTS = DATABASEPOSTS.filter(post => {
-            if (post.video) return true;
-            if (post.iframe && isYouTubeUrl(post.iframe)) {
-                post.youtubeEmbedUrl = convertToEmbedUrl(post.iframe);
-                return true;
-            }
-            return false;
-        });
-
-        if (VIDEO_POSTS.length > 0) {
-            VIDEO_POSTS.sort(() => Math.random() - 0.5);
-            renderReels();
-        } else {
-            showNoVideosMessage();
-        }
-
-    } catch (error) {
-        console.error('Fetch error:', error);
-        showErrorState();
-    } finally {
-        showLoading(false);
-        isLoading = false;
-    }
-}
-
-function isYouTubeUrl(url) {
-    return url && (url.includes('youtube.com') || url.includes('youtu.be'));
-}
-
-function convertToEmbedUrl(url) {
-    if (!url) return null;
-    try {
-        if (url.includes('/shorts/')) {
-            const id = url.split('/shorts/')[1].split('?')[0];
-            return `https://www.youtube.com/embed/${id}?autoplay=0&controls=1&rel=0&modestbranding=1`;
-        }
-        if (url.includes('youtu.be/')) {
-            const id = url.split('youtu.be/')[1].split('?')[0];
-            return `https://www.youtube.com/embed/${id}?autoplay=0&controls=1&rel=0&modestbranding=1`;
-        }
-        if (url.includes('youtube.com/watch')) {
-            const id = new URL(url).searchParams.get('v');
-            return id ? `https://www.youtube.com/embed/${id}?autoplay=0&controls=1&rel=0&modestbranding=1` : null;
-        }
-        if (url.includes('youtube.com/embed/')) {
-            return url.split('?')[0] + '?autoplay=0&controls=1&rel=0&modestbranding=1';
-        }
-        return null;
-    } catch {
-        return null;
-    }
-}
-
-// ==================== RENDER REELS ====================
-function renderReels() {
-    elements.reelsContainer.innerHTML = '';
-    const initialBatch = VIDEO_POSTS.slice(0, Math.min(10, VIDEO_POSTS.length));
-    initialBatch.forEach((post, index) => {
-        elements.reelsContainer.appendChild(createReelElement(post, index));
-    });
-    setTimeout(() => setupVideoControl(), 100);
-}
-
-function createReelElement(post, index) {
-    const reel = document.createElement('div');
-    reel.className = 'reel';
-    reel.dataset.index = index;
-    reel.dataset.postId = post.id;
-
-    const isYouTube = post.iframe && isYouTubeUrl(post.iframe);
-    const videoUrl = isYouTube ? (post.youtubeEmbedUrl || convertToEmbedUrl(post.iframe)) : post.video;
-    const secureToken = generateSecureVideoToken(videoUrl, post.id);
-
-    const liked = currentUser?.likedPosts?.includes?.(post.id) || false;
-
-    reel.innerHTML = `
-        <div class="video-wrapper">
-            ${isYouTube ? `<iframe class="reel-video youtube-video" src="${videoUrl}" frameborder="0" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>` : `
-            <video 
-                class="reel-video secure-video"
-                data-src="${secureToken}"
-                loop
-                playsinline
-                preload="metadata"
-                webkit-playsinline
-                controlsList="nodownload noplaybackrate"
-                oncontextmenu="return false;"
-            ></video>`}
-        </div>
-
-        <div class="video-overlay">
-            <div class="top-section">
-                <button class="back-btn" onclick="window.location.href='index.html'">
-                    <i class="fas fa-arrow-left"></i>
-                </button>
-            </div>
-
-            <div class="bottom-section">
-                <div class="video-info">
-                    <div class="username">@${post.username}</div>
-                    ${post.content ? `<div class="video-caption">${post.content}</div>` : ''}
-                    ${post.topic ? `<div class="topic-tag">#${post.topic}</div>` : ''}
-                </div>
-
-                <div class="reel-actions">
-                    <div class="avatar-btn">
-                        <img id="currentUserAvatar" src="https://ui-avatars.com/api/?name=${post.username}&background=1e3a8a&color=fff" alt="${post.username}">
-                    </div>
-                    <button class="action-btn like-btn ${liked ? 'liked' : ''}" data-post-id="${post.id}" data-index="${index}">
-                        <div class="action-icon"><i class="${liked ? 'fas' : 'far'} fa-heart"></i></div>
-                        <span class="action-count">${formatCount(post.likes || 0)}</span>
-                    </button>
-                    <button class="action-btn share-btn" data-post-id="${post.id}">
-                        <div class="action-icon"><i class="fas fa-share"></i></div>
-                        <span class="action-count">Share</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-
-    setTimeout(() => setupReelEvents(reel, post, index), 0);
-    return reel;
-}
-
-// ==================== REEL EVENTS ====================
-function setupReelEvents(reel, post, index) {
-    const video = reel.querySelector('.reel-video');
-    const likeBtn = reel.querySelector('.like-btn');
-    const shareBtn = reel.querySelector('.share-btn');
-
-    // Like
-    likeBtn?.addEventListener('click', e => {
-        e.stopPropagation();
-        handleLike(post.id, likeBtn);
-    });
-
-    // Share
-    shareBtn?.addEventListener('click', e => {
-        e.stopPropagation();
-        shareReel(post.id);
-    });
-
-    // Double tap to like
-    if (video && !video.classList.contains('youtube-video')) {
-        let lastTap = 0;
-        video.addEventListener('click', e => {
-            const now = Date.now();
-            const tapLength = now - lastTap;
-
-            if (tapLength < 300 && tapLength > 0) {
-                handleLike(post.id, likeBtn);
-                showDoubleTapHeart(reel);
-            } else {
-                // Single tap toggle pause/play
-                if (!video.paused) video.pause();
-                else video.play().catch(() => {});
-            }
-            lastTap = now;
-        });
-    }
-}
-
-// ==================== VIDEO CONTROL ====================
-function setupVideoControl() {
-    const options = { root: elements.reelsContainer, threshold: 0.75, rootMargin: '0px' };
-    const observer = new IntersectionObserver(entries => {
-        entries.forEach(entry => {
-            const video = entry.target.querySelector('.reel-video');
-            if (!video || video.classList.contains('youtube-video')) return;
-
-            if (entry.isIntersecting) {
-                hydrateSecureVideo(video);
-                if (video.paused) video.play().catch(() => {});
-            } else {
-                if (!video.paused) video.pause();
-            }
-        });
-    }, options);
-
-    document.querySelectorAll('.reel').forEach(reel => observer.observe(reel));
-}
-
-// ==================== SCROLL OBSERVER ====================
-function setupScrollObserver() {
-    let scrollTimeout;
-    elements.reelsContainer.addEventListener('scroll', () => {
-        clearTimeout(scrollTimeout);
-        scrollTimeout = setTimeout(() => {
-            const scrollTop = elements.reelsContainer.scrollTop;
-            const scrollHeight = elements.reelsContainer.scrollHeight;
-            const clientHeight = elements.reelsContainer.clientHeight;
-
-            if (scrollHeight - scrollTop - clientHeight < clientHeight * 2) addMoreReels();
-        }, 150);
-    });
-}
-
-function addMoreReels() {
-    const currentCount = document.querySelectorAll('.reel').length;
-    for (let i = 0; i < 5; i++) {
-        const post = VIDEO_POSTS[Math.floor(Math.random() * VIDEO_POSTS.length)];
-        const newIndex = currentCount + i;
-        elements.reelsContainer.appendChild(createReelElement(post, newIndex));
-    }
-    setTimeout(() => setupVideoControl(), 100);
-}
-
-// ==================== INTERACTIONS ====================
-function handleLike(postId, button) {
-    if (!currentUser) return alert('Please login to like videos!');
-    const post = VIDEO_POSTS.find(p => p.id === postId);
-    if (!post) return;
-
-    const icon = button.querySelector('i');
-    const countSpan = button.querySelector('.action-count');
-    const isLiked = currentUser.likedPosts.includes(postId);
-
-    if (isLiked) {
-        currentUser.likedPosts = currentUser.likedPosts.filter(id => id !== postId);
-        icon.className = 'far fa-heart';
-        button.classList.remove('liked');
-        post.likes = Math.max(0, (post.likes || 1) - 1);
+  try {
+    const saved = localStorage.getItem(CURRENT_USER_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      currentUser = {
+        ...parsed,
+        likedPosts: new Set(parsed.likedPosts || []),
+        isGuest: false
+      };
     } else {
-        currentUser.likedPosts.push(postId);
-        icon.className = 'fas fa-heart';
-        button.classList.add('liked');
-        post.likes = (post.likes || 0) + 1;
+      currentUser = { name: 'Guest', username: 'guest', likedPosts: new Set(), isGuest: true };
     }
-
-    countSpan.textContent = formatCount(post.likes);
-    saveUserData();
+  } catch(e) {
+    currentUser = { name: 'Guest', username: 'guest', likedPosts: new Set(), isGuest: true };
+  }
 }
 
-function showDoubleTapHeart(reel) {
-    const heart = document.createElement('div');
-    heart.className = 'double-tap-heart';
-    heart.innerHTML = '<i class="fas fa-heart"></i>';
-    reel.appendChild(heart);
-    setTimeout(() => heart.remove(), 800);
+function saveCurrentUser() {
+  if (!currentUser || currentUser.isGuest) return;
+  const toSave = { ...currentUser, likedPosts: Array.from(currentUser.likedPosts) };
+  localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(toSave));
 }
 
-async function shareReel(postId) {
-    const post = VIDEO_POSTS.find(p => p.id === postId);
-    if (!post) return;
-    const shareUrl = `https://penutcreation.github.io/MEKO/?share=${postId}`;
-    const shareText = `Check out this video on Meko Reels!`;
+// ===================== FETCH =====================
+async function fetchPosts() {
+  try {
+    const res = await fetch(JSON_URL + '?v=' + Date.now(), { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch(e) { throw new Error('Invalid JSON'); }
+    const arr = Array.isArray(data) ? data : (data.posts || data.data || []);
+    DATABASEPOSTS = arr.filter(p => p && p.name && p.username && p.datePost);
+    buildVideoPosts();
+    renderFeed();
+  } catch(err) {
+    console.error('Fetch error:', err);
+    document.getElementById('loading-card').innerHTML = `
+      <div class="reel-loading-inner">
+        <i class="fas fa-exclamation-triangle" style="font-size:2.5rem;color:#ef4444"></i>
+        <span>Failed to load</span>
+        <button onclick="fetchPosts()" style="background:var(--accent);border:none;color:white;padding:8px 20px;border-radius:8px;cursor:pointer;font-size:0.9rem;">Retry</button>
+      </div>`;
+  }
+}
 
-    try {
-        if (navigator.share) await navigator.share({ title: 'Meko Reels', text: shareText, url: shareUrl });
-        else {
-            await navigator.clipboard.writeText(shareUrl);
-            alert('Link copied to clipboard!');
+function buildVideoPosts() {
+  videoPosts = DATABASEPOSTS.filter(p => {
+    if (p.video) return true;
+    if (p.iframe) {
+      const s = p.iframe.toLowerCase();
+      return s.includes('youtube.com/embed') || s.includes('youtu.be') || s.includes('vimeo') || s.includes('video') || s.includes('embed');
+    }
+    return false;
+  });
+  // Assign IDs
+  DATABASEPOSTS.forEach((post, i) => {
+    post.id = `meko-${post.username.toLowerCase()}-reco${DATABASEPOSTS.length - i}`;
+  });
+  shuffleArray(videoPosts);
+}
+
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
+
+function sortByTrending() {
+  videoPosts.sort((a, b) => b.likes - a.likes);
+}
+
+// ===================== RENDER =====================
+function renderFeed() {
+  const feed = document.getElementById('feed');
+  feed.innerHTML = '';
+  renderedIndices.clear();
+
+  if (videoPosts.length === 0) {
+    feed.innerHTML = `
+      <div class="reel-empty">
+        <i class="fas fa-film"></i>
+        <h3>No videos found</h3>
+        <p style="color:rgba(255,255,255,0.4);font-size:0.9rem">Check back later for new videos</p>
+        <a href="index.html" style="margin-top:1rem;background:var(--accent);color:white;padding:10px 24px;border-radius:10px;text-decoration:none;font-weight:600">Back to Feed</a>
+      </div>`;
+    return;
+  }
+
+  // Render first 3 cards immediately
+  const limit = Math.min(3, videoPosts.length);
+  for (let i = 0; i < limit; i++) {
+    renderCard(i, feed);
+  }
+
+  setupScrollObserver(feed);
+}
+
+function renderCard(index, feedEl) {
+  if (renderedIndices.has(index)) return;
+  renderedIndices.add(index);
+
+  const post = videoPosts[index];
+  if (!post) return;
+
+  const feedNode = feedEl || document.getElementById('feed');
+  const card = document.createElement('div');
+  card.className = 'reel-card';
+  card.dataset.index = index;
+  card.dataset.postId = post.id || '';
+
+  const isLiked = currentUser?.likedPosts?.has(post.id);
+  const processedCaption = (post.content || '').replace(/@(\w+)/g,
+    '<span class="mention" data-username="$1">@$1</span>');
+  const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(post.name)}&background=1e3a8a&color=fff`;
+
+  card.innerHTML = `
+    <div class="reel-gradient-top"></div>
+    <div class="reel-gradient-bottom"></div>
+
+    ${buildMediaEl(post, index)}
+
+    <div class="pause-icon" id="pause-icon-${index}"><i class="fas fa-pause"></i></div>
+    <div class="speed-badge" id="speed-badge-${index}">2×</div>
+
+    <!-- Info -->
+    <div class="reel-info">
+      <div class="reel-user" data-username="${post.username}" data-name="${post.name}">
+        <img src="${avatarUrl}" class="reel-avatar" alt="${post.name}">
+        <div>
+          <div class="reel-user-name">${post.name}</div>
+          <div class="reel-user-handle">@${post.username}</div>
+        </div>
+      </div>
+      ${processedCaption ? `<div class="reel-caption" id="caption-${index}">${processedCaption}</div>` : ''}
+      ${processedCaption && processedCaption.length > 120 ? `<button class="read-more-btn" data-caption="${index}">more</button>` : ''}
+      ${post.topic ? `<div class="reel-topic"><i class="fas fa-hashtag"></i>${post.topic}</div>` : ''}
+    </div>
+
+    <!-- Actions -->
+    <div class="reel-actions">
+      <div class="action-item ${isLiked ? 'liked' : ''}" data-action="like" data-post-id="${post.id}">
+        <div class="action-circle like-btn-circle"><i class="fas fa-heart"></i></div>
+        <span class="action-label like-count">${formatNum(post.likes)}</span>
+      </div>
+      <div class="action-item" data-action="share" data-post-id="${post.id}">
+        <div class="action-circle"><i class="fas fa-share-alt"></i></div>
+        <span class="action-label">Share</span>
+      </div>
+      <div class="action-item reel-user-action" data-username="${post.username}" data-name="${post.name}">
+        <div class="action-circle"><i class="fas fa-user"></i></div>
+        <span class="action-label">Profile</span>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="reel-progress"><div class="reel-progress-fill" id="prog-${index}"></div></div>
+  `;
+
+  feedNode.appendChild(card);
+
+  // Event listeners
+  bindCardEvents(card, index, post);
+}
+
+function buildMediaEl(post, index) {
+  if (post.video) {
+    const token = generateSecureToken(post.video, post.id);
+    return `<video class="reel-video" id="vid-${index}"
+        data-src="${token}" data-index="${index}"
+        loop playsinline preload="metadata"
+        controlsList="nodownload noplaybackrate"
+        oncontextmenu="return false;"
+        disablePictureInPicture
+        style="pointer-events:none;">
+     onclick="togglePlayPause(0); event.preventDefault();"></video>`;
+  } else if (post.iframe) {
+    // For YouTube/iframe we show it as iframe but with overlay for gesture capture
+    return `<div class="reel-iframe-wrap" id="iframe-wrap-${index}">
+        <iframe src="" data-src="${post.iframe}" id="iframe-${index}"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen></iframe>
+      </div>`;
+  }
+  return '';
+}
+
+// ===================== SECURE TOKEN =====================
+function generateSecureToken(url, postId) {
+  try {
+    const payload = JSON.stringify({ src: url, pid: postId, exp: Date.now() + 600000 });
+    return btoa(payload.split('').reverse().join(''));
+  } catch(e) { return ''; }
+}
+
+function decodeSecureToken(token) {
+  try {
+    const dec = atob(token).split('').reverse().join('');
+    const data = JSON.parse(dec);
+    if (Date.now() > data.exp) return null;
+    return data.src;
+  } catch(e) { return null; }
+}
+
+// ===================== CARD EVENTS =====================
+function bindCardEvents(card, index, post) {
+  let tapTimeout = null;
+  let tapCount = 0;
+  let touchStartY = 0, touchStartX = 0, touchStartTime = 0;
+  let scrolling = false;
+
+  // User profile click (info section)
+  const userRow = card.querySelector('.reel-user');
+  if (userRow) {
+    userRow.addEventListener('click', () => openProfileSheet(post.username, post.name));
+  }
+
+  // Profile action button
+  const profileActionBtn = card.querySelector('.reel-user-action');
+  if (profileActionBtn) {
+    profileActionBtn.addEventListener('click', () => openProfileSheet(post.username, post.name));
+  }
+
+  // Like
+  const likeAction = card.querySelector('[data-action="like"]');
+  if (likeAction) {
+    likeAction.addEventListener('click', (e) => {
+      e.stopPropagation();
+      handleLike(post.id, likeAction);
+    });
+  }
+
+  // Share
+  const shareAction = card.querySelector('[data-action="share"]');
+  if (shareAction) {
+    shareAction.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openShareSheet(post.id, post);
+    });
+  }
+
+  // Mentions
+  card.querySelectorAll('.mention').forEach(m => {
+    m.addEventListener('click', e => {
+      e.stopPropagation();
+      const uname = m.dataset.username;
+      const exists = DATABASEPOSTS.some(p => p.username === uname);
+      if (exists) openProfileSheet(uname, uname);
+    });
+  });
+
+  // Read more
+  const readMoreBtn = card.querySelector('.read-more-btn');
+  if (readMoreBtn) {
+    readMoreBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      const capId = readMoreBtn.dataset.caption;
+      const capEl = document.getElementById(`caption-${capId}`);
+      if (capEl) {
+        capEl.classList.toggle('expanded');
+        readMoreBtn.textContent = capEl.classList.contains('expanded') ? 'less' : 'more';
+      }
+    });
+  }
+
+  // ---- Touch / Click Interactions on the card video area ----
+  
+
+
+
+let longPressTimer = null;
+let isLongPress = false;
+let justTouched = false;
+const videoArea = card;
+
+// ================= TOUCH START =================
+videoArea.addEventListener('touchstart', (e) => {
+
+  justTouched = true;
+
+  const touch = e.touches[0];
+  touchStartY = touch.clientY;
+  touchStartX = touch.clientX;
+  touchStartTime = Date.now();
+
+  scrolling = false;
+  isLongPress = false;
+
+  longPressTimer = setTimeout(() => {
+    isLongPress = true;
+    startFastForward(index);
+  }, 400);
+
+}, { passive: true });
+
+
+// ================= TOUCH MOVE =================
+videoArea.addEventListener('touchmove', (e) => {
+
+  const touch = e.touches[0];
+  const dy = Math.abs(touch.clientY - touchStartY);
+  const dx = Math.abs(touch.clientX - touchStartX);
+
+  if (dy > 12 || dx > 12) {
+    scrolling = true;
+    clearTimeout(longPressTimer);
+
+    if (isLongPress) {
+      stopFastForward(index);
+    }
+  }
+
+}, { passive: true });
+
+
+// ================= TOUCH END =================
+videoArea.addEventListener('touchend', () => {
+
+  clearTimeout(longPressTimer);
+
+  if (isLongPress) {
+    stopFastForward(index);
+    return;
+  }
+
+  if (scrolling) return;
+
+  const touchDur = Date.now() - touchStartTime;
+
+  if (touchDur > 300) return;
+
+  tapCount++;
+
+  if (tapCount === 1) {
+
+    tapTimeout = setTimeout(() => {
+      tapCount = 0;
+      togglePlayPause(index);
+    }, 250);
+
+  } 
+  else if (tapCount === 2) {
+
+    clearTimeout(tapTimeout);
+    tapCount = 0;
+
+    doubleTapLike(post.id, card, likeAction);
+  }
+
+  setTimeout(() => {
+    justTouched = false;
+  }, 400);
+
+}, { passive: true });
+
+
+// ================= DESKTOP CLICK =================
+videoArea.addEventListener('click', (e) => {
+
+  if (justTouched) return;
+
+  // Ignore buttons / UI elements
+  if (e.target.closest('.reel-actions, .reel-info, .reel-user, [data-action], .mention, .read-more-btn')) {
+    return;
+  }
+
+  togglePlayPause(index);
+
+});
+}
+
+// ===================== PLAY / PAUSE =====================
+const pauseIconTimers = {};
+const toggleLocks = {}; // prevent double toggle
+
+function togglePlayPause(index) {
+  if (toggleLocks[index]) return; // block rapid double trigger
+  toggleLocks[index] = true;
+
+  setTimeout(() => {
+    toggleLocks[index] = false;
+  }, 150); // small delay to ignore duplicate clicks
+
+  const vid = document.getElementById(`vid-${index}`);
+  if (!vid) return;
+
+  if (vid.paused) {
+    vid.play().catch(() => {});
+    
+showOverlayIcon(index, 'pause');
+  } else {
+    vid.pause();
+showOverlayIcon(index, 'play');
+  }
+}
+
+function showOverlayIcon(index, type) {
+  const el = document.getElementById(`pause-icon-${index}`);
+  if (!el) return;
+
+  clearTimeout(pauseIconTimers[index]);
+
+  const icon = el.querySelector('i');
+  icon.className = type === 'pause' ? 'fas fa-pause' : 'fas fa-play';
+  el.classList.add('show');
+
+  if (type === 'play') {
+    pauseIconTimers[index] = setTimeout(() => {
+      el.classList.remove('show');
+    }, 900);
+  }
+}
+
+function hidePauseIcon(index) {
+  const el = document.getElementById(`pause-icon-${index}`);
+  if (!el) return;
+  clearTimeout(pauseIconTimers[index]);
+  el.classList.remove('show');
+}
+
+function showPauseIcon(index) { showOverlayIcon(index, 'pause'); }
+function showPlayIcon(index)  { showOverlayIcon(index, 'play'); }
+
+// ===================== FAST FORWARD =====================
+function startFastForward(index) {
+  const vid = document.getElementById(`vid-${index}`);
+  if (!vid) return;
+
+  vid.playbackRate = 2.0;
+
+  const badge = document.getElementById(`speed-badge-${index}`);
+  if (badge) badge.classList.add('show');
+
+  hidePauseIcon(index);
+}
+
+function stopFastForward(index) {
+  const vid = document.getElementById(`vid-${index}`);
+  if (!vid) return;
+
+  vid.playbackRate = 1.0;
+
+  const badge = document.getElementById(`speed-badge-${index}`);
+  if (badge) badge.classList.remove('show');
+
+  isLongPress = false;
+}
+
+// ===================== DOUBLE TAP LIKE =====================
+function doubleTapLike(postId, card, likeBtn) {
+  // Show heart animation
+  const heart = document.createElement('div');
+  heart.className = 'dt-heart';
+  heart.innerHTML = '❤️';
+  card.appendChild(heart);
+  setTimeout(() => heart.remove(), 800);
+
+  if (!currentUser?.likedPosts?.has(postId)) {
+    handleLike(postId, likeBtn);
+  }
+}
+
+// ===================== VIDEO LOADING =====================
+function loadVideo(index) {
+  const vid = document.getElementById(`vid-${index}`);
+  if (!vid || vid.dataset.loaded) return;
+  const token = vid.dataset.src;
+  if (!token) return;
+  const url = decodeSecureToken(token);
+  if (url) {
+    vid.src = url;
+    vid.muted = isMuted;
+    vid.load();
+    vid.dataset.loaded = '1';
+  }
+}
+
+function loadIframe(index) {
+  const iframe = document.getElementById(`iframe-${index}`);
+  if (!iframe || iframe.src) return;
+  const src = iframe.dataset.src;
+  if (src) {
+    // For YouTube, add autoplay & mute params
+    let finalSrc = src;
+    if (src.includes('youtube.com/embed') || src.includes('youtu.be')) {
+      const sep = src.includes('?') ? '&' : '?';
+      finalSrc = src + sep + 'autoplay=1&mute=' + (isMuted ? '1' : '0') + '&loop=1&controls=0&playsinline=1';
+    }
+    iframe.src = finalSrc;
+  }
+}
+
+// ===================== SCROLL / INTERSECTION =====================
+function setupScrollObserver(feedEl) {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const card = entry.target;
+      const index = parseInt(card.dataset.index);
+      const vid = document.getElementById(`vid-${index}`);
+
+      if (entry.isIntersecting && entry.intersectionRatio >= 0.8) {
+        currentIndex = index;
+
+        // Load & play video
+        if (vid) {
+          loadVideo(index);
+          setTimeout(() => {
+            vid.muted = isMuted;
+            vid.play().catch(() => {});
+          }, 100);
+          activeVideoEl = vid;
+
+          // Progress bar
+          vid.addEventListener('timeupdate', () => {
+            const prog = document.getElementById(`prog-${index}`);
+            if (prog && vid.duration) {
+              prog.style.width = (vid.currentTime / vid.duration * 100) + '%';
+            }
+          });
+        } else {
+          // iframe
+          loadIframe(index);
         }
-    } catch {
-        prompt('Copy this link:', shareUrl);
+
+        // Preload next
+        const nextIdx = index + 1;
+        if (nextIdx < videoPosts.length && !renderedIndices.has(nextIdx)) {
+          renderCard(nextIdx, feedEl);
+        }
+        const nextNext = index + 2;
+        if (nextNext < videoPosts.length && !renderedIndices.has(nextNext)) {
+          renderCard(nextNext, feedEl);
+        }
+
+      } else {
+        // Pause when leaving viewport
+        if (vid && !vid.paused) {
+          vid.pause();
+          vid.currentTime = 0;
+        }
+        // Reset iframe
+        const iframeWrap = document.getElementById(`iframe-wrap-${index}`);
+        if (iframeWrap) {
+          const iframe = document.getElementById(`iframe-${index}`);
+          if (iframe) iframe.src = '';
+        }
+      }
+    });
+  }, { threshold: 0.8 });
+
+  feedEl.querySelectorAll('.reel-card').forEach(card => observer.observe(card));
+
+  // Observe new cards as they're added
+  const mutObs = new MutationObserver(mutations => {
+    mutations.forEach(m => {
+      m.addedNodes.forEach(node => {
+        if (node.classList && node.classList.contains('reel-card')) {
+          observer.observe(node);
+        }
+      });
+    });
+  });
+  mutObs.observe(feedEl, { childList: true });
+}
+
+// ===================== LIKE =====================
+function handleLike(postId, actionEl) {
+  if (!currentUser || currentUser.isGuest) {
+    showToast('Login to like videos!');
+    return;
+  }
+
+  const post = videoPosts.find(p => p.id === postId);
+  if (!post) return;
+
+  const isLiked = currentUser.likedPosts.has(postId);
+  const circle = actionEl?.querySelector('.action-circle');
+  const countEl = actionEl?.querySelector('.like-count');
+
+  if (isLiked) {
+    currentUser.likedPosts.delete(postId);
+    post.likes = Math.max(0, post.likes - 1);
+    actionEl?.classList.remove('liked');
+  } else {
+    currentUser.likedPosts.add(postId);
+    post.likes++;
+    actionEl?.classList.add('liked');
+    if (circle) {
+      circle.classList.add('heart-pop');
+      setTimeout(() => circle.classList.remove('heart-pop'), 300);
     }
+  }
+
+  if (countEl) countEl.textContent = formatNum(post.likes);
+  saveCurrentUser();
 }
 
-// ==================== HELPERS ====================
-function formatCount(num) {
-    if (num >= 1e6) return (num / 1e6).toFixed(1) + 'M';
-    if (num >= 1e3) return (num / 1e3).toFixed(1) + 'K';
-    return num.toString();
+// ===================== SHARE =====================
+function generateShareUrl(postId) {
+  const base = location.origin + location.pathname.replace('reel.html', 'index.html');
+  const encoded = encodeURIComponent(`/post/orgin/${postId}/content`);
+  return `${base}?share=${encoded}`;
 }
 
-function saveUserData() {
-    if (currentUser) localStorage.setItem('meko-current-user', JSON.stringify(currentUser));
+function openShareSheet(postId, post) {
+  currentSharePostId = postId;
+  const url = generateShareUrl(postId);
+  document.getElementById('share-link-input').value = url;
+
+  const copyBtn = document.getElementById('share-copy-btn');
+  copyBtn.textContent = 'Copy';
+  copyBtn.classList.remove('copied');
+
+  document.getElementById('share-overlay').classList.add('active');
 }
 
-function showLoading(show) {
-    elements.loadingIndicator.style.display = show ? 'block' : 'none';
-}
-
-function showNoVideosMessage() {
-    elements.reelsContainer.innerHTML = `
-        <div class="empty-state">
-            <i class="fas fa-video-slash"></i>
-            <h3>No Videos Found</h3>
-            <p>There are no video posts available yet. Check back later!</p>
-            <button class="retry-btn" onclick="location.reload()">
-                <i class="fas fa-redo"></i> Reload
-            </button>
-        </div>`;
-}
-
-function showErrorState() {
-    elements.reelsContainer.innerHTML = `
-        <div class="error-state">
-            <i class="fas fa-exclamation-triangle"></i>
-            <h3>Failed to Load</h3>
-            <p>Something went wrong. Please try again.</p>
-            <button class="retry-btn" onclick="location.reload()">
-                <i class="fas fa-redo"></i> Retry
-            </button>
-        </div>`;
-}
-
-// ==================== INITIALIZE ====================
-document.addEventListener('DOMContentLoaded', initApp);
-
-document.addEventListener('visibilitychange', () => {
-    if (document.hidden) document.querySelectorAll('.reel-video').forEach(v => !v.classList.contains('youtube-video') && !v.paused && v.pause());
+document.getElementById('share-overlay').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('share-overlay')) {
+    document.getElementById('share-overlay').classList.remove('active');
+  }
 });
 
-window.addEventListener('beforeunload', () => {
-    document.querySelectorAll('.reel-video').forEach(v => !v.classList.contains('youtube-video') && !v.paused && v.pause());
+document.getElementById('share-copy-btn').addEventListener('click', () => {
+  const input = document.getElementById('share-link-input');
+  navigator.clipboard.writeText(input.value).then(() => {
+    const btn = document.getElementById('share-copy-btn');
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
 });
-    </script>
+
+document.querySelectorAll('.platform-item').forEach(item => {
+  item.addEventListener('click', () => {
+    const platform = item.dataset.platform;
+    const url = document.getElementById('share-link-input').value;
+    const post = videoPosts.find(p => p.id === currentSharePostId) || {};
+    const text = `Check out this video on MekoNetwork by @${post.username || ''}: `;
+    const eu = encodeURIComponent(url), et = encodeURIComponent(text);
+    let shareUrl = '';
+    if (platform === 'whatsapp') shareUrl = `https://wa.me/?text=${et}${eu}`;
+    else if (platform === 'facebook') shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${eu}`;
+    else if (platform === 'twitter') shareUrl = `https://twitter.com/intent/tweet?text=${et}&url=${eu}`;
+    else if (platform === 'telegram') shareUrl = `https://t.me/share/url?url=${eu}&text=${et}`;
+    if (shareUrl) window.open(shareUrl, '_blank', 'noopener,noreferrer,width=600,height=400');
+  });
+});
+
+// ===================== PROFILE SHEET =====================
+function openProfileSheet(username, name) {
+  const userPosts = DATABASEPOSTS.filter(p => p.username === username);
+  const totalLikes = userPosts.reduce((s, p) => s + p.likes, 0);
+  const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=1e3a8a&color=fff&size=128`;
+
+  document.getElementById('sheet-username').textContent = name;
+
+  const body = document.getElementById('profile-sheet-body');
+  body.innerHTML = `
+    <div class="profile-hero">
+      <img src="${avatarUrl}" class="profile-hero-avatar" alt="${name}">
+      <div class="profile-hero-name">${name}</div>
+      <div class="profile-hero-handle">@${username}</div>
+    </div>
+    <div class="profile-stats-row">
+      <div class="stat-box">
+        <div class="stat-box-val">${userPosts.length}</div>
+        <div class="stat-box-label">Posts</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-box-val">${formatNum(totalLikes)}</div>
+        <div class="stat-box-label">Likes</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-box-val">${userPosts.filter(p => p.video || p.iframe).length}</div>
+        <div class="stat-box-label">Videos</div>
+      </div>
+    </div>
+    <div class="profile-posts-grid">
+      ${userPosts.slice(0, 9).map(p => `
+        <div class="profile-thumb">
+          ${p.image ? `<img src="${p.image}" alt="post" loading="lazy">` : `<div style="width:100%;height:100%;background:#1e1e1e;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.2);font-size:1.5rem"><i class="fas fa-${p.video||p.iframe ? 'film' : 'align-left'}"></i></div>`}
+          ${p.video || p.iframe ? `<div class="profile-thumb-video"><i class="fas fa-play" style="font-size:0.9rem"></i></div>` : ''}
+        </div>
+      `).join('')}
+    </div>
+    <div style="margin-top:1.5rem">
+      <a href="index.html" style="display:flex;align-items:center;justify-content:center;gap:0.5rem;background:var(--accent);color:white;padding:12px;border-radius:12px;text-decoration:none;font-weight:600;font-size:0.9rem;">
+        <i class="fas fa-external-link-alt"></i> View Full Profile
+      </a>
+    </div>
+  `;
+
+  document.getElementById('profile-overlay').classList.add('active');
+}
+
+document.getElementById('profile-overlay').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('profile-overlay')) {
+    document.getElementById('profile-overlay').classList.remove('active');
+  }
+});
+document.getElementById('close-profile-sheet').addEventListener('click', () => {
+  document.getElementById('profile-overlay').classList.remove('active');
+});
+
+// ===================== MUTE TOGGLE =====================
+function toggleMute() {
+  isMuted = !isMuted;
+  
+  // Update all videos
+  document.querySelectorAll('.reel-video').forEach(v => { v.muted = isMuted; });
+  
+  // Update icons
+  const icon = isMuted ? 'fa-volume-mute' : 'fa-volume-up';
+  document.getElementById('sb-mute-icon').className = `fas ${icon}`;
+
+  const indEl = document.getElementById('mute-indicator');
+  const indIcon = document.getElementById('mute-ind-icon');
+  const indText = document.getElementById('mute-ind-text');
+  
+  if (isMuted) {
+    indEl.style.display = 'flex';
+    indIcon.className = 'fas fa-volume-mute';
+    indText.textContent = 'Muted';
+  } else {
+    indEl.style.display = 'none';
+  }
+}
+
+document.getElementById('sb-mute-btn').addEventListener('click', toggleMute);
+document.getElementById('mute-indicator').addEventListener('click', toggleMute);
+
+// ===================== TABS =====================
+document.getElementById('tab-for-you').addEventListener('click', function() {
+  this.classList.add('active');
+  document.getElementById('tab-following').classList.remove('active');
+  sortMode = 'random';
+  shuffleArray(videoPosts);
+  renderFeed();
+});
+
+document.getElementById('tab-following').addEventListener('click', function() {
+  this.classList.add('active');
+  document.getElementById('tab-for-you').classList.remove('active');
+  sortMode = 'trending';
+  sortByTrending();
+  renderFeed();
+});
+
+// ===================== PROFILE BUTTONS =====================
+document.getElementById('sb-profile-btn').addEventListener('click', () => {
+  if (!currentUser || currentUser.isGuest) {
+    showToast('Please login to view profile');
+    return;
+  }
+  openProfileSheet(currentUser.username, currentUser.name);
+});
+
+document.getElementById('mob-profile-btn').addEventListener('click', () => {
+  if (!currentUser || currentUser.isGuest) {
+    showToast('Please login to view profile');
+    return;
+  }
+  openProfileSheet(currentUser.username, currentUser.name);
+});
+
+document.getElementById('sb-logout-btn').addEventListener('click', () => {
+  localStorage.removeItem(CURRENT_USER_KEY);
+  window.location.href = 'index.html';
+});
+
+// ===================== UTILS =====================
+function formatNum(n) {
+  if (!n) return '0';
+  if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+  if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+  return n.toString();
+}
+
+let toastTimeout;
+function showToast(msg) {
+  let toast = document.getElementById('toast-el');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'toast-el';
+    toast.style.cssText = `
+      position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+      background:rgba(0,0,0,0.85);color:white;padding:10px 20px;
+      border-radius:50px;font-size:0.82rem;z-index:999;
+      backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.1);
+      transition:opacity 0.3s;white-space:nowrap;
+    `;
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.opacity = '1';
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => { toast.style.opacity = '0'; }, 2500);
+}
+
+// Prevent context menu on long press (mobile)
+document.addEventListener('contextmenu', e => e.preventDefault());
+
+// ===================== INIT =====================
+loadCurrentUser();
+fetchPosts();
+</script>
 </body>
 </html>
