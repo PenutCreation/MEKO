@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Post Generator Compact</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body{
+  margin:0;
+  background:#020617;
+  color:#e5e7eb;
+  font-family: system-ui;
+}
+
+.box{
+  max-width:420px;
+  margin:auto;
+  padding:10px;
+}
+
+h2{
+  text-align:center;
+  font-size:14px;
+  margin:4px 0 8px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+}
+
+.full{ grid-column:1 / -1; }
+
+input, textarea, select{
+  width:100%;
+  background:#000;
+  border:1px solid #1e293b;
+  color:#e5e7eb;
+  padding:6px;
+  border-radius:6px;
+  font-size:12px;
+}
+
+textarea{
+  min-height:50px;
+}
+
+label{
+  font-size:10px;
+  opacity:.7;
+}
+
+.btns{
+  position:sticky;
+  bottom:0;
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:4px;
+  margin-top:8px;
+  background:#020617;
+  padding-top:6px;
+}
+
+button{
+  border:none;
+  padding:6px;
+  font-size:11px;
+  border-radius:6px;
+  cursor:pointer;
+  font-weight:600;
+  color:white;
+  background:linear-gradient(135deg,#2563eb,#4f46e5);
+}
+
+button.alt{ background:#334155; }
+button.danger{ background:#dc2626; }
+
+button:active{ transform:scale(.95); }
+
+pre{
+  margin-top:8px;
+  background:#000;
+  border:1px solid #1e293b;
+  padding:8px;
+  font-size:11px;
+  border-radius:8px;
+  max-height:220px;
+  overflow:auto;
+  color:#22c55e;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+  <h2>⚡ POST GENERATOR</h2>
+
+  <div class="grid">
+
+    <div>
+      <label>User</label>
+      <select id="userSelect"></select>
+    </div>
+
+    <div>
+      <label>🎲</label>
+      <button onclick="randomUser()">Random</button>
+    </div>
+
+    <div>
+      <label>Name</label>
+      <input id="name">
+    </div>
+
+    <div>
+      <label>Username</label>
+      <input id="username">
+    </div>
+
+    <div class="full">
+      <label>Content</label>
+      <textarea id="content"></textarea>
+    </div>
+
+    <!-- DATE MODE -->
+    <div>
+      <label>Mode</label>
+      <select id="dateMode">
+        <option value="manual">Manual</option>
+        <option value="estate">Estate</option>
+      </select>
+    </div>
+
+    <div>
+      <label>Date</label>
+      <input id="customDate" type="datetime-local">
+    </div>
+
+    <!-- ESTATE RANGE -->
+    <div id="estateBox" class="full" style="display:none;">
+      <div class="grid">
+        <div>
+          <label>Start</label>
+          <input id="estateStart" type="datetime-local">
+        </div>
+        <div>
+          <label>End</label>
+          <input id="estateEnd" type="datetime-local">
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <label>Likes</label>
+      <input id="likes" type="number">
+    </div>
+
+    <div>
+      <label>Image</label>
+      <input id="image">
+    </div>
+
+    <div>
+      <label>Video</label>
+      <input id="video">
+    </div>
+
+    <div class="full">
+      <label>Iframe</label>
+      <input id="iframe">
+    </div>
+
+    <div class="full">
+      <label>Topic</label>
+      <input id="topic" value="MyMeko">
+    </div>
+
+  </div>
+
+  <div class="btns">
+    <button onclick="generatePost()">Gen</button>
+    <button class="alt" onclick="deleteLast()">Undo</button>
+    <button class="alt" onclick="copyAll()">Copy</button>
+    <button class="danger" onclick="clearAll()">Clear</button>
+  </div>
+
+  <pre id="output"></pre>
+</div>
+
+<script>
+let posts = JSON.parse(localStorage.getItem("generated_posts") || "[]");
+let users = JSON.parse(localStorage.getItem("generated_users") || "[]");
+
+const $ = id => document.getElementById(id);
+
+/* USERS */
+function refreshUsers(){
+  $("userSelect").innerHTML = `<option value="">New</option>`;
+  users.forEach((u,i)=>{
+    $("userSelect").innerHTML += `<option value="${i}">${u.name}</option>`;
+  });
+}
+refreshUsers();
+
+/* DATE MODE TOGGLE */
+$("dateMode").addEventListener("change", () => {
+  $("estateBox").style.display =
+    $("dateMode").value === "estate" ? "block" : "none";
+});
+
+/* DATE FORMAT */
+function formatDate(d){
+  return d.toLocaleString();
+}
+
+/* RANDOM DATE ENGINE 🔥 */
+function randomDateBetween(start, end){
+  const s = new Date(start).getTime();
+  const e = new Date(end).getTime();
+
+  if(isNaN(s) || isNaN(e)) return new Date();
+
+  return new Date(Math.floor(Math.random() * (e - s + 1)) + s);
+}
+
+/* CLEAN */
+function cleanVideoURL(url){
+  return url.replace(/_lq(?=\.mp4$)/i,"");
+}
+
+/* GENERATE */
+function generatePost(){
+  const name = $("name").value.trim();
+  const username = $("username").value.trim();
+
+  if(!name || !username) return alert("Name + username required");
+
+  if(!users.some(u=>u.username===username)){
+    users.push({name,username});
+    localStorage.setItem("generated_users",JSON.stringify(users));
+    refreshUsers();
+  }
+
+  let finalDate;
+
+  if($("dateMode").value === "estate"){
+    const start = $("estateStart").value;
+    const end = $("estateEnd").value;
+
+    finalDate = formatDate(randomDateBetween(start, end));
+  }else{
+    finalDate = $("customDate").value
+      ? formatDate(new Date($("customDate").value))
+      : formatDate(new Date());
+  }
+
+  posts.unshift({
+    name,
+    username,
+    datePost: finalDate,
+    content: $("content").value,
+    iframe: $("iframe").value,
+    video: cleanVideoURL($("video").value),
+    image: $("image").value,
+    likes: parseInt($("likes").value)||0,
+    liked:false,
+    topic:$("topic").value
+  });
+
+  localStorage.setItem("generated_posts",JSON.stringify(posts));
+  updateOutput();
+
+  $("content").value="";
+}
+
+/* OUTPUT */
+function updateOutput(){
+  let txt="";
+  posts.forEach(p=>txt+=JSON.stringify(p,null,2)+",\n");
+  $("output").textContent = txt;
+}
+updateOutput();
+
+/* CONTROLS */
+function deleteLast(){
+  posts.shift();
+  updateOutput();
+}
+
+function clearAll(){
+  posts=[];
+  updateOutput();
+}
+
+function copyAll(){
+  navigator.clipboard.writeText($("output").textContent);
+}
+
+/* RANDOM USER */
+function randomUser(){
+  const id = Math.floor(Math.random()*1000);
+  $("name").value = "User"+id;
+  $("username").value = "user"+id;
+}
+</script>
+
+</body>
+</html>
