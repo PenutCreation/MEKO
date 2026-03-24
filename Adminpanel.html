@@ -1,193 +1,263 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Post Generator Compact</title>
-
+<title>Post Generator</title>
 <style>
 * { box-sizing: border-box; }
 
-body{
-  margin:0;
-  background:#020617;
-  color:#e5e7eb;
+body {
+  margin: 0;
+  background: #020617;
+  color: #e5e7eb;
   font-family: system-ui;
 }
 
-.box{
-  max-width:420px;
-  margin:auto;
-  padding:10px;
+.box {
+  max-width: 420px;
+  margin: auto;
+  padding: 10px;
 }
 
-h2{
-  text-align:center;
-  font-size:14px;
-  margin:4px 0 8px;
+h2 {
+  text-align: center;
+  font-size: 14px;
+  margin: 4px 0 8px;
 }
 
-.grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:6px;
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin-bottom: 8px;
 }
 
-.full{ grid-column:1 / -1; }
-
-input, textarea, select{
-  width:100%;
-  background:#000;
-  border:1px solid #1e293b;
-  color:#e5e7eb;
-  padding:6px;
-  border-radius:6px;
-  font-size:12px;
+.tab {
+  border: none;
+  padding: 6px;
+  font-size: 11px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  color: #94a3b8;
+  background: #0f172a;
+  transition: all .15s;
 }
 
-textarea{
-  min-height:50px;
+.tab.active {
+  color: white;
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
 }
 
-label{
-  font-size:10px;
-  opacity:.7;
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
 }
 
-.btns{
-  position:sticky;
-  bottom:0;
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:4px;
-  margin-top:8px;
-  background:#020617;
-  padding-top:6px;
+.full { grid-column: 1 / -1; }
+
+input, textarea, select {
+  width: 100%;
+  background: #000;
+  border: 1px solid #1e293b;
+  color: #e5e7eb;
+  padding: 6px;
+  border-radius: 6px;
+  font-size: 12px;
 }
 
-button{
-  border:none;
-  padding:6px;
-  font-size:11px;
-  border-radius:6px;
-  cursor:pointer;
-  font-weight:600;
-  color:white;
-  background:linear-gradient(135deg,#2563eb,#4f46e5);
+textarea { min-height: 50px; }
+
+label {
+  font-size: 10px;
+  opacity: .7;
+  display: block;
+  margin-bottom: 2px;
 }
 
-button.alt{ background:#334155; }
-button.danger{ background:#dc2626; }
+.btns {
+  position: sticky;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  margin-top: 8px;
+  background: #020617;
+  padding-top: 6px;
+}
 
-button:active{ transform:scale(.95); }
+.btns.conv-btns {
+  grid-template-columns: repeat(3, 1fr);
+}
 
-pre{
-  margin-top:8px;
-  background:#000;
-  border:1px solid #1e293b;
-  padding:8px;
-  font-size:11px;
-  border-radius:8px;
-  max-height:220px;
-  overflow:auto;
-  color:#22c55e;
+button {
+  border: none;
+  padding: 6px;
+  font-size: 11px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
+}
+
+button.alt { background: #334155; }
+button.danger { background: #dc2626; }
+button.green { background: #16a34a; }
+
+button:active { transform: scale(.95); }
+
+pre {
+  margin-top: 8px;
+  background: #000;
+  border: 1px solid #1e293b;
+  padding: 8px;
+  font-size: 11px;
+  border-radius: 8px;
+  max-height: 220px;
+  overflow: auto;
+  color: #22c55e;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+#convInput {
+  min-height: 120px;
+  font-family: monospace;
+  font-size: 11px;
+}
+
+.section { display: none; }
+.section.active { display: block; }
+
+.err {
+  color: #f87171;
+  font-size: 10px;
+  margin-top: 4px;
 }
 </style>
 </head>
-
 <body>
-
 <div class="box">
   <h2>⚡ POST GENERATOR</h2>
 
-  <div class="grid">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('gen')">Generator</button>
+    <button class="tab" onclick="switchTab('conv')">Converter</button>
+  </div>
 
-    <div>
-      <label>User</label>
-      <select id="userSelect"></select>
-    </div>
+  <!-- GENERATOR SECTION -->
+  <div id="genSection" class="section active">
+    <div class="grid">
+      <div>
+        <label>User</label>
+        <select id="userSelect"></select>
+      </div>
 
-    <div>
-      <label>🎲</label>
-      <button onclick="randomUser()">Random</button>
-    </div>
+      <div>
+        <label>🎲</label>
+        <button onclick="randomUser()">Random</button>
+      </div>
 
-    <div>
-      <label>Name</label>
-      <input id="name">
-    </div>
+      <div>
+        <label>Name</label>
+        <input id="name">
+      </div>
 
-    <div>
-      <label>Username</label>
-      <input id="username">
-    </div>
+      <div>
+        <label>Username</label>
+        <input id="username">
+      </div>
 
-    <div class="full">
-      <label>Content</label>
-      <textarea id="content"></textarea>
-    </div>
+      <div class="full">
+        <label>Content</label>
+        <textarea id="content"></textarea>
+      </div>
 
-    <!-- DATE MODE -->
-    <div>
-      <label>Mode</label>
-      <select id="dateMode">
-        <option value="manual">Manual</option>
-        <option value="estate">Estate</option>
-      </select>
-    </div>
+      <div>
+        <label>Mode</label>
+        <select id="dateMode">
+          <option value="manual">Manual</option>
+          <option value="estate">Estate</option>
+        </select>
+      </div>
 
-    <div>
-      <label>Date</label>
-      <input id="customDate" type="datetime-local">
-    </div>
+      <div>
+        <label>Date</label>
+        <input id="customDate" type="datetime-local">
+      </div>
 
-    <!-- ESTATE RANGE -->
-    <div id="estateBox" class="full" style="display:none;">
-      <div class="grid">
-        <div>
-          <label>Start</label>
-          <input id="estateStart" type="datetime-local">
+      <div id="estateBox" class="full" style="display:none;">
+        <div class="grid">
+          <div>
+            <label>Start</label>
+            <input id="estateStart" type="datetime-local">
+          </div>
+          <div>
+            <label>End</label>
+            <input id="estateEnd" type="datetime-local">
+          </div>
         </div>
-        <div>
-          <label>End</label>
-          <input id="estateEnd" type="datetime-local">
-        </div>
+      </div>
+
+      <div>
+        <label>Likes</label>
+        <input id="likes" type="number">
+      </div>
+
+      <div>
+        <label>Image</label>
+        <input id="image">
+      </div>
+
+      <div>
+        <label>Video</label>
+        <input id="video">
+      </div>
+
+      <div class="full">
+        <label>Iframe</label>
+        <input id="iframe">
+      </div>
+
+      <div class="full">
+        <label>Topic</label>
+        <input id="topic" value="MyMeko">
       </div>
     </div>
 
-    <div>
-      <label>Likes</label>
-      <input id="likes" type="number">
+    <div class="btns">
+      <button onclick="generatePost()">Gen</button>
+      <button class="alt" onclick="deleteLast()">Undo</button>
+      <button class="alt" onclick="copyOutput('output')">Copy</button>
+      <button class="danger" onclick="clearAll()">Clear</button>
     </div>
 
-    <div>
-      <label>Image</label>
-      <input id="image">
-    </div>
-
-    <div>
-      <label>Video</label>
-      <input id="video">
-    </div>
-
-    <div class="full">
-      <label>Iframe</label>
-      <input id="iframe">
-    </div>
-
-    <div class="full">
-      <label>Topic</label>
-      <input id="topic" value="MyMeko">
-    </div>
-
+    <pre id="output"></pre>
   </div>
 
-  <div class="btns">
-    <button onclick="generatePost()">Gen</button>
-    <button class="alt" onclick="deleteLast()">Undo</button>
-    <button class="alt" onclick="copyAll()">Copy</button>
-    <button class="danger" onclick="clearAll()">Clear</button>
-  </div>
+  <!-- CONVERTER SECTION -->
+  <div id="convSection" class="section">
+    <div class="grid">
+      <div class="full">
+        <label>Default Topic</label>
+        <input id="convTopic" value="MyMeko">
+      </div>
+      <div class="full">
+        <label>Paste JSON array or objects to convert</label>
+        <textarea id="convInput" placeholder='[{"author":"florenz","content":"Hi","date":"Jun 26, 2022","likes":"4.2M"}, ...]'></textarea>
+      </div>
+    </div>
+    <div id="convErr" class="err"></div>
 
-  <pre id="output"></pre>
+    <div class="btns conv-btns">
+      <button class="green" onclick="convertPosts()">Convert</button>
+      <button class="alt" onclick="copyOutput('convOutput')">Copy</button>
+      <button class="danger" onclick="clearConv()">Clear</button>
+    </div>
+
+    <pre id="convOutput"></pre>
+  </div>
 </div>
 
 <script>
@@ -196,62 +266,79 @@ let users = JSON.parse(localStorage.getItem("generated_users") || "[]");
 
 const $ = id => document.getElementById(id);
 
+/* TABS */
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', (i === 0 && tab === 'gen') || (i === 1 && tab === 'conv'));
+  });
+  $('genSection').classList.toggle('active', tab === 'gen');
+  $('convSection').classList.toggle('active', tab === 'conv');
+}
+
 /* USERS */
-function refreshUsers(){
+function refreshUsers() {
   $("userSelect").innerHTML = `<option value="">New</option>`;
-  users.forEach((u,i)=>{
+  users.forEach((u, i) => {
     $("userSelect").innerHTML += `<option value="${i}">${u.name}</option>`;
   });
 }
 refreshUsers();
 
-/* DATE MODE TOGGLE */
-$("dateMode").addEventListener("change", () => {
-  $("estateBox").style.display =
-    $("dateMode").value === "estate" ? "block" : "none";
+$("userSelect").addEventListener("change", () => {
+  const idx = $("userSelect").value;
+  if (idx === "") return;
+  const u = users[parseInt(idx)];
+  $("name").value = u.name;
+  $("username").value = u.username;
 });
 
-/* DATE FORMAT */
-function formatDate(d){
-  return d.toLocaleString();
+/* DATE MODE TOGGLE */
+$("dateMode").addEventListener("change", () => {
+  $("estateBox").style.display = $("dateMode").value === "estate" ? "block" : "none";
+});
+
+/* DATE FORMAT: "Mar 18 2026 4:27PM" */
+function formatDate(d) {
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const month = months[d.getMonth()];
+  const day = d.getDate();
+  const year = d.getFullYear();
+  let hours = d.getHours();
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12 || 12;
+  return `${month} ${day} ${year} ${hours}:${minutes}${ampm}`;
 }
 
-/* RANDOM DATE ENGINE 🔥 */
-function randomDateBetween(start, end){
+/* RANDOM DATE */
+function randomDateBetween(start, end) {
   const s = new Date(start).getTime();
   const e = new Date(end).getTime();
-
-  if(isNaN(s) || isNaN(e)) return new Date();
-
+  if (isNaN(s) || isNaN(e)) return new Date();
   return new Date(Math.floor(Math.random() * (e - s + 1)) + s);
 }
 
-/* CLEAN */
-function cleanVideoURL(url){
-  return url.replace(/_lq(?=\.mp4$)/i,"");
+/* CLEAN VIDEO URL */
+function cleanVideoURL(url) {
+  return url.replace(/_lq(?=\.mp4$)/i, "");
 }
 
 /* GENERATE */
-function generatePost(){
+function generatePost() {
   const name = $("name").value.trim();
   const username = $("username").value.trim();
+  if (!name || !username) return alert("Name + username required");
 
-  if(!name || !username) return alert("Name + username required");
-
-  if(!users.some(u=>u.username===username)){
-    users.push({name,username});
-    localStorage.setItem("generated_users",JSON.stringify(users));
+  if (!users.some(u => u.username === username)) {
+    users.push({ name, username });
+    localStorage.setItem("generated_users", JSON.stringify(users));
     refreshUsers();
   }
 
   let finalDate;
-
-  if($("dateMode").value === "estate"){
-    const start = $("estateStart").value;
-    const end = $("estateEnd").value;
-
-    finalDate = formatDate(randomDateBetween(start, end));
-  }else{
+  if ($("dateMode").value === "estate") {
+    finalDate = formatDate(randomDateBetween($("estateStart").value, $("estateEnd").value));
+  } else {
     finalDate = $("customDate").value
       ? formatDate(new Date($("customDate").value))
       : formatDate(new Date());
@@ -265,47 +352,103 @@ function generatePost(){
     iframe: $("iframe").value,
     video: cleanVideoURL($("video").value),
     image: $("image").value,
-    likes: parseInt($("likes").value)||0,
-    liked:false,
-    topic:$("topic").value
+    likes: parseInt($("likes").value) || 0,
+    liked: false,
+    topic: $("topic").value
   });
 
-  localStorage.setItem("generated_posts",JSON.stringify(posts));
+  localStorage.setItem("generated_posts", JSON.stringify(posts));
   updateOutput();
-
-  $("content").value="";
+  $("content").value = "";
 }
 
-/* OUTPUT */
-function updateOutput(){
-  let txt="";
-  posts.forEach(p=>txt+=JSON.stringify(p,null,2)+",\n");
+function updateOutput() {
+  let txt = "";
+  posts.forEach(p => txt += JSON.stringify(p, null, 2) + ",\n");
   $("output").textContent = txt;
 }
 updateOutput();
 
-/* CONTROLS */
-function deleteLast(){
+function deleteLast() {
   posts.shift();
+  localStorage.setItem("generated_posts", JSON.stringify(posts));
   updateOutput();
 }
 
-function clearAll(){
-  posts=[];
+function clearAll() {
+  posts = [];
+  localStorage.setItem("generated_posts", JSON.stringify(posts));
   updateOutput();
 }
 
-function copyAll(){
-  navigator.clipboard.writeText($("output").textContent);
+function copyOutput(id) {
+  navigator.clipboard.writeText($(id).textContent);
 }
 
-/* RANDOM USER */
-function randomUser(){
-  const id = Math.floor(Math.random()*1000);
-  $("name").value = "User"+id;
-  $("username").value = "user"+id;
+function randomUser() {
+  const id = Math.floor(Math.random() * 1000);
+  $("name").value = "User" + id;
+  $("username").value = "user" + id;
+}
+
+/* CONVERTER */
+function parseLikes(val) {
+  if (val === undefined || val === null || val === "") return 0;
+  if (typeof val === "number") return val;
+  const str = String(val).trim().toUpperCase().replace(/,/g, "");
+  const num = parseFloat(str);
+  if (str.endsWith("B")) return Math.round(num * 1_000_000_000);
+  if (str.endsWith("M")) return Math.round(num * 1_000_000);
+  if (str.endsWith("K")) return Math.round(num * 1_000);
+  return parseInt(str) || 0;
+}
+
+function convertPosts() {
+  $("convErr").textContent = "";
+  let raw = $("convInput").value.trim();
+  const topic = $("convTopic").value || "MyMeko";
+
+  // wrap in array if not already
+  if (!raw.startsWith("[")) raw = "[" + raw + "]";
+  // remove trailing commas before ] to be lenient
+  raw = raw.replace(/,\s*]/g, "]");
+
+  let arr;
+  try {
+    arr = JSON.parse(raw);
+  } catch (e) {
+    $("convErr").textContent = "❌ Invalid JSON: " + e.message;
+    return;
+  }
+
+  if (!Array.isArray(arr)) {
+    $("convErr").textContent = "❌ Expected an array of objects.";
+    return;
+  }
+
+  const converted = arr.map(item => ({
+    name: item.author || item.name || "",
+    username: (item.author || item.username || "").toLowerCase().replace(/\s+/g, "_"),
+    datePost: item.date || item.datePost || "",
+    content: item.content || "",
+    iframe: item.iframe || "",
+    video: item.video || "",
+    image: item.image || "",
+    likes: parseLikes(item.likes),
+    liked: false,
+    topic: item.topic || topic
+  }));
+
+  let txt = "";
+  converted.forEach(p => txt += JSON.stringify(p, null, 2) + ",\n");
+  $("convOutput").textContent = txt;
+}
+
+function clearConv() {
+  $("convInput").value = "";
+  $("convOutput").textContent = "";
+  $("convErr").textContent = "";
 }
 </script>
-
 </body>
 </html>
